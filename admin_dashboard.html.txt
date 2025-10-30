@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Masonic Applications Admin Dashboard</title>
+    <!-- Load Tailwind CSS for modern styling and responsiveness -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font and base styles */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+        }
+        .table-header {
+            background-color: #1e40af; /* Darker blue for header */
+            color: white;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        .table-row-data {
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s;
+        }
+        .table-row-data:nth-child(even) {
+            background-color: #f9fafb;
+        }
+        .table-row-data:hover {
+            background-color: #e0f2fe; /* Light blue hover effect */
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <div class="max-w-7xl mx-auto bg-white shadow-2xl rounded-xl p-6 sm:p-10">
+        
+        <header class="text-center mb-8 border-b pb-4">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800">Application Review Dashboard</h1>
+            <p class="text-gray-500 mt-2 text-lg">View and manage submitted membership applications.</p>
+            <p id="userIdDisplay" class="text-xs text-gray-400 mt-1">User ID: Loading...</p>
+        </header>
+
+        <!-- Loading/Error Indicator -->
+        <div id="statusMessage" class="text-center p-4 mb-4 text-indigo-600 font-medium bg-indigo-50 rounded-lg">
+            Connecting to database and fetching applications...
+        </div>
+
+        <!-- Applications Table Container -->
+        <div class="overflow-x-auto shadow-md rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead>
+                    <tr>
+                        <th class="table-header">Date</th>
+                        <th class="table-header">Applicant Name</th>
+                        <th class="table-header">Lodge Applied To</th>
+                        <th class="table-header">DOB / Age</th>
+                        <th class="table-header">Marital Status</th>
+                        <th class="table-header">Review</th>
+                    </tr>
+                </thead>
+                <tbody id="applicationsTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Data will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Detail Modal (for viewing full application data) -->
+        <div id="detailModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center p-4">
+            <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">Application Details</h2>
+                    <button onclick="document.getElementById('detailModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 font-bold text-2xl">&times;</button>
+                </div>
+                <div id="modalContent" class="p-6 text-sm space-y-4">
+                    <!-- Detailed data will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Environment variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        let auth;
+        
+        const statusMessage = document.getElementById('statusMessage');
+        const tableBody = document.getElementById('applicationsTableBody');
+        const detailModal = document.getElementById('detailModal');
+        const modalContent = document.getElementById('modalContent');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+
+        // Set log level to see Firebase operations in console
+        setLogLevel('debug');
+
+        /**
+         * Converts a simple object into a clean, readable HTML definition list.
+         */
+        function formatDataForModal(data) {
+            let html = '<dl class="divide-y divide-gray-100">';
+            for (const key in data) {
+                // Skip internal Firebase keys or unnecessary display keys
+                if (key.startsWith('applicantId') || key.startsWith('submissionDate')) continue;
+
+                // Format key to be human readable
+                const readableKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                let value = data[key] || "N/A";
+                
+                // Special formatting for large text fields
+                if (value && typeof value === 'string' && value.length > 100) {
+                    value = `<p class="whitespace-pre-wrap mt-1 p-2 bg-gray-50 rounded-md">${value}</p>`;
+                }
+
+                html += `
+                    <div class="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
+                        <dt class="text-sm font-medium leading-6 text-gray-900">${readableKey}</dt>
+                        <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">${value}</dd>
+                    </div>
+                `;
+            }
+            html += '</dl>';
+            return html;
+        }
+
+        /**
+         * Opens the detail modal with the full data for a single application.
+         */
+        window.openDetails = (data) => {
+            modalContent.innerHTML = formatDataForModal(data);
+            detailModal.classList.remove('hidden');
+        };
+
+
+        /**
+         * Fetches and displays all submitted applications from Firestore.
+         */
+        async function fetchApplications() {
+            if (!db) {
+                statusMessage.textContent = "Error: Database not connected.";
+                statusMessage.classList.remove('bg-indigo-50');
+                statusMessage.classList.add('bg-red-100', 'text-red-700');
+                return;
+            }
+
+            try {
+                // Public data collection path
+                const collectionPath = `/artifacts/${appId}/public/data/applications`;
+                const q = query(collection(db, collectionPath));
+                
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    statusMessage.textContent = "No applications found yet. Share the application link!";
+                    statusMessage.classList.remove('bg-indigo-50');
+                    statusMessage.classList.add('bg-yellow-100', 'text-yellow-700');
+                    return;
+                }
+
+                tableBody.innerHTML = ''; // Clear previous data
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const submissionDate = data.submissionDate ? new Date(data.submissionDate).toLocaleDateString() : 'N/A';
+                    
+                    const row = document.createElement('tr');
+                    row.className = 'table-row-data';
+                    
+                    // Display key summary data in the table
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${submissionDate}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.printName || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.lodgeName || 'N/A'} (No. ${data.lodgeNumber || '-'})</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.dob || 'N/A'} (${data.age || '?'})</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.maritalStatus ? data.maritalStatus.charAt(0).toUpperCase() + data.maritalStatus.slice(1) : 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button class="text-indigo-600 hover:text-indigo-900 font-semibold" 
+                                onclick='window.openDetails(${JSON.stringify(data)})'>
+                                View Full
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                statusMessage.textContent = `Successfully loaded ${querySnapshot.size} applications.`;
+                statusMessage.classList.remove('bg-indigo-50', 'text-indigo-600');
+                statusMessage.classList.add('bg-green-100', 'text-green-700');
+
+            } catch (error) {
+                console.error("Error fetching documents:", error);
+                statusMessage.textContent = "Error loading applications. Check console for details.";
+                statusMessage.classList.remove('bg-indigo-50');
+                statusMessage.classList.add('bg-red-100', 'text-red-700');
+            }
+        }
+
+        /**
+         * Initialize Firebase connection and authentication.
+         */
+        async function initFirebase() {
+            try {
+                // 1. Initialize Firebase
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // 2. Authenticate User (Admin view uses anonymous or custom token)
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // 3. Wait for Auth State and Fetch Data
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userIdDisplay.textContent = `User ID: ${user.uid}`;
+                        fetchApplications(); // Fetch data once authenticated
+                    } else {
+                        statusMessage.textContent = 'Error: Authentication failed.';
+                        statusMessage.classList.remove('bg-indigo-50');
+                        statusMessage.classList.add('bg-red-100', 'text-red-700');
+                    }
+                });
+                
+            } catch (error) {
+                console.error("Firebase Initialization Error:", error);
+                statusMessage.textContent = 'Fatal Error: Database connection failed.';
+            }
+        }
+
+        // Start initialization when the page loads
+        initFirebase();
+    </script>
+</body>
+</html>
+
