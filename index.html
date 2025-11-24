@@ -3,721 +3,318 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masonic Membership Application</title>
-    <!-- Load Tailwind CSS for modern styling and responsiveness -->
+    <title>Lodge Financial Admin</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom font and base styles */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        /* Custom styles for mobile-first design and better aesthetics */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8; /* Light blue-gray background */
+            background-color: #f3f4f6; /* Light gray background */
         }
-        /* Style for all input fields and textareas */
-        .input-field {
-            border: 1px solid #c8d2e0; /* Softer border */
-            border-radius: 0.5rem;
-            padding: 0.75rem;
-            width: 100%;
-            background-color: #ffffff;
-            transition: all 0.2s ease-in-out;
+        .app-container {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
         }
-        .input-field:focus {
-            border-color: #2563eb; /* Blue focus ring */
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
-            outline: none;
+        .nav-link {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            padding: 0.75rem 1rem;
+            font-weight: 500;
         }
-        .form-group label {
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 0.25rem;
-            display: block;
-            line-height: 1.5; /* Ensure readability */
+        .nav-link.active {
+            border-bottom: 3px solid #3b82f6; /* Blue border for active tab */
+            color: #3b82f6;
         }
-        /* Specific styling for the header block */
-        .header-block {
-            background-color: #1f2937; /* Dark background for distinction */
-            color: #f9fafb;
+        .card {
+            background-color: white;
             border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
         }
-        .section-header {
-            color: #1f2937;
-            border-bottom: 2px solid #3b82f6;
-            padding-bottom: 0.5rem;
-        }
-        .disclaimer {
-            font-size: 0.875rem;
-            color: #6b7280;
-            line-height: 1.4;
+        .error-message {
+            color: #ef4444; /* Red for errors */
+            font-weight: 600;
             padding: 1rem;
-            border: 1px dashed #d1d5db;
+            background-color: #fee2e2;
+            border: 2px solid #fca5a5;
             border-radius: 0.5rem;
+            margin-bottom: 1rem;
         }
-        .admin-section {
-            background-color: #ffe4e6; /* Light red/pink to mark administrative only */
-            border: 3px solid #ef4444;
-            pointer-events: none; /* Prevents user interaction */
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
         }
-        .admin-section .input-field {
-            background-color: #fecaca;
+        /* Style for the "Connecting..." button */
+        .connecting-button {
+            transition: background-color 0.3s;
+            cursor: not-allowed;
+            background-color: #60a5fa; /* A slightly darker blue for connecting state */
         }
     </style>
 </head>
-<body class="p-4 sm:p-8">
+<body class="bg-gray-100">
 
-    <div class="max-w-4xl mx-auto bg-white shadow-2xl rounded-xl p-6 sm:p-10">
-        
-        <!-- Header and Emblem Placeholder -->
-        <header class="header-block text-center p-6 mb-8">
-            <div class="text-4xl mb-3">
-                <span style="font-size: 3rem;">&#9874;</span> <!-- Placeholder: Compass and Square -->
+    <div class="app-container">
+        <!-- Header Bar -->
+        <header class="bg-white p-4 border-b border-gray-200">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-bold text-gray-800">Lodge Financial Admin</h1>
+                <div class="flex items-center text-sm">
+                    <span class="text-gray-600 mr-2">Status:</span>
+                    <div id="connection-status" class="flex items-center">
+                        <span id="status-dot" class="status-dot bg-gray-400"></span>
+                        <span id="status-text">Connecting...</span>
+                    </div>
+                </div>
             </div>
-            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">APPLICATION FOR MEMBERSHIP</h1>
-            <p class="text-sm mt-1 text-gray-400">Universal Grand Lodge, A. F. & A. M. No. 1 of Texas and the U. S. A.</p>
-            <p class="text-xs text-gray-500 mt-2">Ancient Free and Accepted Scottish Rite / Member of the General Grand Masonic Congress</p>
+            <!-- Navigation Tabs -->
+            <nav class="flex justify-around mt-4">
+                <div id="tab-dashboard" class="nav-link active" onclick="showTab('dashboard')">Dashboard</div>
+                <div id="tab-dues" class="nav-link" onclick="showTab('dues')">Dues Roster</div>
+                <div id="tab-expenses" class="nav-link" onclick="showTab('expenses')">Expenses</div>
+            </nav>
         </header>
 
-        <!-- Loading/Error Indicator (Always visible until initialization is complete) -->
-        <div id="statusMessage" class="text-center p-4 text-indigo-600 font-medium text-xl border border-indigo-300 rounded-lg mb-8">
-            Initializing database connection...
-        </div>
+        <main class="p-4">
+            <!-- Fatal Error Display -->
+            <div id="fatal-error-display" class="hidden error-message"></div>
 
-        <!-- Main Form Container - Hidden by default -->
-        <form id="membershipApplicationForm" class="space-y-10 hidden">
-            
-            <!-- 1. Lodge Information & Date -->
-            <section class="space-y-6">
-                <h2 class="text-xl font-bold section-header">Lodge Information</h2>
-                
-                <div class="form-group">
-                    <label for="lodgeName">IN Lodge Name</label>
-                    <input type="text" id="lodgeName" name="lodgeName" placeholder="Name of Lodge" class="input-field" required>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group">
-                        <label for="lodgeNumber">Lodge No.</label>
-                        <input type="text" id="lodgeNumber" name="lodgeNumber" placeholder="Lodge Number" class="input-field" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="applicationDate">Date of Application given (Month/Day/Year)</label>
-                        <input type="date" id="applicationDate" name="applicationDate" class="input-field" required>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group md:col-span-2">
-                        <label for="lodgeAddress">Address</label>
-                        <input type="text" id="lodgeAddress" name="lodgeAddress" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="lodgeCity">City</label>
-                        <input type="text" id="lodgeCity" name="lodgeCity" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="lodgeCounty">County of</label>
-                        <input type="text" id="lodgeCounty" name="lodgeCounty" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="lodgeState">State</label>
-                        <input type="text" id="lodgeState" name="lodgeState" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="lodgeZip">Zip Code</label>
-                        <input type="text" id="lodgeZip" name="lodgeZip" class="input-field">
-                    </div>
-                </div>
-            </section>
-            
-            <!-- 2. Recommended By & WM/Secretary Info (COMPLETE) -->
-            <section class="space-y-6">
-                <h2 class="text-xl font-bold section-header">Recommendations & Lodge Contact</h2>
-                
-                <p class="font-semibold text-gray-700">Recommended By (Four Brother's Names and Addresses):</p>
-                <div class="space-y-3">
-                    <!-- Recommended By 1 -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="rec1Name" name="rec1Name" class="input-field" placeholder="Brother's Name 1" required>
-                        <input type="text" id="rec1Address" name="rec1Address" class="input-field" placeholder="Address / City/State/ZIP 1" required>
-                    </div>
-                    <!-- Recommended By 2 -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="rec2Name" name="rec2Name" class="input-field" placeholder="Brother's Name 2" required>
-                        <input type="text" id="rec2Address" name="rec2Address" class="input-field" placeholder="Address / City/State/ZIP 2" required>
-                    </div>
-                    <!-- Recommended By 3 -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="rec3Name" name="rec3Name" class="input-field" placeholder="Brother's Name 3" required>
-                        <input type="text" id="rec3Address" name="rec3Address" class="input-field" placeholder="Address / City/State/ZIP 3" required>
-                    </div>
-                    <!-- Recommended By 4 -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="rec4Name" name="rec4Name" class="input-field" placeholder="Brother's Name 4" required>
-                        <input type="text" id="rec4Address" name="rec4Address" class="input-field" placeholder="Address / City/State/ZIP 4" required>
-                    </div>
-                </div>
-
-                <div class="space-y-4 pt-4 border-t">
-                    <div class="form-group">
-                        <label for="wmSecretaryName">Name of W.M. or Secretary</label>
-                        <input type="text" id="wmSecretaryName" name="wmSecretaryName" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="wmSecretaryAddress">Address, City/State/ZIP</label>
-                        <input type="text" id="wmSecretaryAddress" name="wmSecretaryAddress" class="input-field" placeholder="Address, City/State/ZIP">
-                    </div>
-                    <div class="form-group">
-                        <label for="wmSecretaryPhone">Telephone No. (A/C)</label>
-                        <input type="tel" id="wmSecretaryPhone" name="wmSecretaryPhone" class="input-field">
-                    </div>
-                </div>
-            </section>
-
-            <!-- 3. Applicant Personal Details -->
-            <section class="space-y-6">
-                <h2 class="text-xl font-bold section-header">Applicant Personal Details</h2>
-                
-                <p class="disclaimer">
-                    All applicants to join the order shall be required to fill in the application and take a background check in their own handwriting, or cause the same to be done over their signature.
-                </p>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group">
-                        <label for="printName">Applicant Name (PRINT OR TYPE NAME)</label>
-                        <input type="text" id="printName" name="printName" class="input-field" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="ssn">Social Security No.</label>
-                        <input type="text" id="ssn" name="ssn" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="age">Age last birthday</label>
-                        <input type="number" id="age" name="age" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="dob">Date of Birth</label>
-                        <input type="date" id="dob" name="dob" class="input-field">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="streetAddress">Street Address</label>
-                    <input type="text" id="streetAddress" name="streetAddress" class="input-field">
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="form-group">
-                        <label for="applicantCity">City</label>
-                        <input type="text" id="applicantCity" name="applicantCity" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="applicantState">State</label>
-                        <input type="text" id="applicantState" name="applicantState" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="applicantZip">Zip Code</label>
-                        <input type="text" id="applicantZip" name="applicantZip" class="input-field">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="applicantPhone">Telephone No. (A/C)</label>
-                    <input type="tel" id="applicantPhone" name="applicantPhone" class="input-field">
-                </div>
-            </section>
-
-            <!-- 4. Marital and Family Status (COMPLETE) -->
-            <section class="space-y-6">
-                <h2 class="text-xl font-bold section-header">Marital and Family Status</h2>
-                
-                <div class="form-group space-y-2">
-                    <label>2. Marital Status</label>
-                    <div class="flex flex-wrap gap-4">
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="maritalStatus" value="married" class="form-radio text-indigo-600">
-                            <span class="ml-2">Married</span>
-                        </label>
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="maritalStatus" value="single" class="form-radio text-indigo-600">
-                            <span class="ml-2">Single</span>
-                        </label>
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="maritalStatus" value="widowed" class="form-radio text-indigo-600">
-                            <span class="ml-2">Widowed</span>
-                        </label>
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="maritalStatus" value="divorced" class="form-radio text-indigo-600">
-                            <span class="ml-2">Divorced</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="space-y-4 border p-4 rounded-lg bg-gray-50">
-                    <h3 class="font-semibold text-lg text-gray-700">(a) If Married:</h3>
-                    <div class="form-group">
-                        <label for="wifeName">Name of Wife</label>
-                        <input type="text" id="wifeName" name="wifeName" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="marriageDetails">Date and place of marriage</label>
-                        <input type="text" id="marriageDetails" name="marriageDetails" placeholder="Date and City/State" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="childrenMarried">Names and ages of all children born to this marriage:</label>
-                        <textarea id="childrenMarried" name="childrenMarried" rows="2" class="input-field resize-none"></textarea>
-                    </div>
-                </div>
-
-                <div class="space-y-4 border p-4 rounded-lg bg-gray-50">
-                    <h3 class="font-semibold text-lg text-gray-700">(b) If married more than once:</h3>
-                    
-                    <div class="form-group space-y-2">
-                        <label>State how said marriage terminated (Divorce or Death)</label>
-                        <input type="text" id="priorMarriageTerminationDetails" name="priorMarriageTerminationDetails" class="input-field" placeholder="e.g., Divorce, Death">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="priorWifeChildren">Names and ages of all children born to this marriage:</label>
-                        <textarea id="priorWifeChildren" name="priorWifeChildren" rows="2" class="input-field resize-none"></textarea>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="form-group">
-                            <label for="deceasedWifeName">If terminated in death, Name of Deceased Wife</label>
-                            <input type="text" id="deceasedWifeName" name="deceasedWifeName" class="input-field">
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="tab-content">
+                <div class="card mb-4">
+                    <h2 class="text-lg font-semibold mb-3">Financial Summary (Live Data)</h2>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Dues Collected:</span>
+                            <span id="total-dues" class="font-bold text-blue-600">$0.00</span>
                         </div>
-                        <div class="form-group">
-                            <label for="divorcedWifeName">If terminated by divorce, name of Divorced wife</label>
-                            <input type="text" id="divorcedWifeName" name="divorcedWifeName" class="input-field">
+                        <div class="flex justify-between border-b pb-2">
+                            <span class="text-gray-600">Total Expenses:</span>
+                            <span id="total-expenses" class="font-bold text-red-600">-$0.00</span>
                         </div>
-                        <div class="form-group">
-                            <label for="divorceDate">Date Divorce granted</label>
-                            <input type="date" id="divorceDate" name="divorceDate" class="input-field">
-                        </div>
-                        <div class="form-group">
-                            <label for="divorceCityState">City, State of divorce</label>
-                            <input type="text" id="divorceCityState" name="divorceCityState" class="input-field" placeholder="City, State">
+                        <div class="flex justify-between pt-2">
+                            <span class="text-xl font-bold">Net Balance:</span>
+                            <span id="net-balance" class="text-xl font-bold text-green-600">$0.00</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group">
-                        <label for="motherName">Name of Mother</label>
-                        <input type="text" id="motherName" name="motherName" class="input-field">
-                        <label class="inline-flex items-center mt-2">
-                            <input type="checkbox" name="motherDeceased" value="true" class="form-checkbox text-red-600 rounded">
-                            <span class="ml-2 text-sm text-red-700">Deceased (Check if applicable)</span>
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label for="fatherName">Name of Father</label>
-                        <input type="text" id="fatherName" name="fatherName" class="input-field">
-                        <label class="inline-flex items-center mt-2">
-                            <input type="checkbox" name="fatherDeceased" value="true" class="form-checkbox text-red-600 rounded">
-                            <span class="ml-2 text-sm text-red-700">Deceased (Check if applicable)</span>
-                        </label>
-                    </div>
-                    <div class="form-group md:col-span-2">
-                        <label for="parentsAddress">Address (if living)</label>
-                        <input type="text" id="parentsAddress" name="parentsAddress" placeholder="Address of Mother or Father" class="input-field">
-                    </div>
+                <!-- Example Form -->
+                <div class="card">
+                    <h2 class="text-lg font-semibold mb-3">Record New Expense</h2>
+                    <p class="text-sm text-gray-500 mb-4">This section is functional only when connected to Firebase.</p>
+                    <form id="expense-form" onsubmit="recordExpense(event)">
+                        <input type="number" id="expense-amount" placeholder="Amount ($)" required class="w-full p-2 mb-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <input type="text" id="expense-description" placeholder="Description" required class="w-full p-2 mb-4 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <button type="submit" id="expense-submit-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition duration-200">
+                            Record Expense
+                        </button>
+                    </form>
                 </div>
-
-                <div class="form-group">
-                    <label for="siblings">Names of all brothers and sisters of applicant born of same parents (list names/ages):</label>
-                    <textarea id="siblings" name="siblings" rows="3" class="input-field resize-none"></textarea>
-                </div>
-
-                <div class="form-group border-t pt-4">
-                    <label for="beneficiaryName">Beneficiary’s Name and Relationship</label>
-                    <input type="text" id="beneficiaryName" name="beneficiaryName" placeholder="Name - Relationship" class="input-field">
-                </div>
-                <div class="form-group">
-                    <label for="beneficiaryAddress">Beneficiary's Address</label>
-                    <input type="text" id="beneficiaryAddress" name="beneficiaryAddress" class="input-field">
-                </div>
-                <div class="form-group">
-                    <label for="beneficiaryCityStateZip">City/State/Zip</label>
-                    <input type="text" id="beneficiaryCityStateZip" name="beneficiaryCityStateZip" class="input-field">
-                </div>
-                
-            </section>
-
-            <!-- 5. Employment and Prior Membership -->
-            <section class="space-y-6">
-                <h2 class="text-xl font-bold section-header">Employment and Prior Membership</h2>
-
-                <div class="form-group">
-                    <label for="occupation">Occupation</label>
-                    <input type="text" id="occupation" name="occupation" class="input-field">
-                </div>
-                <div class="form-group">
-                    <label for="employer">Name and address of employer</label>
-                    <input type="text" id="employer" name="employer" class="input-field">
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group">
-                        <label for="employmentLength">How long in present employment?</label>
-                        <input type="text" id="employmentLength" name="employmentLength" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="priorEmployer">Prior employer</label>
-                        <input type="text" id="priorEmployer" name="priorEmployer" class="input-field">
-                    </div>
-                </div>
-
-                <div class="form-group pt-4 border-t">
-                    <label class="block mb-2">Have you ever made application to join a Masonic Lodge before?</label>
-                    <div class="flex gap-4 mb-4">
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="previousApplication" value="yes" class="form-radio text-indigo-600">
-                            <span class="ml-2">YES</span>
-                        </label>
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="previousApplication" value="no" class="form-radio text-indigo-600">
-                            <span class="ml-2">NO</span>
-                        </label>
-                    </div>
-                    
-                    <div class="space-y-4 p-4 rounded-lg bg-gray-50">
-                        <h3 class="font-semibold text-base text-gray-700">(a) If YES:</h3>
-                        <div class="form-group">
-                            <label for="priorLodgeName">Give name, City, State and Date of application</label>
-                            <input type="text" id="priorLodgeName" name="priorLodgeName" placeholder="Name, City, State - Year" class="input-field">
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-4 p-4 rounded-lg bg-gray-50 mt-4">
-                        <h3 class="font-semibold text-base text-gray-700">(b) If reinstating:</h3>
-                        <div class="form-group">
-                            <label for="reinstatingLodge">Name and No. of the Lodge where membership last held</label>
-                            <input type="text" id="reinstatingLodge" name="reinstatingLodge" class="input-field">
-                        </div>
-                        <div class="form-group">
-                            <label for="terminationDate">Date membership in said Lodge terminated</label>
-                            <input type="date" id="terminationDate" name="terminationDate" class="input-field">
-                        </div>
-                        <div class="form-group">
-                            <label for="terminationReason">Why Terminated</label>
-                            <input type="text" id="terminationReason" name="terminationReason" class="input-field">
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- 6. Health and Conduct -->
-            <section class="space-y-6">
-                <h2 class="text-xl font-bold section-header">Health and Conduct</h2>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group">
-                        <label for="healthStatus">Are you in good health?</label>
-                        <select id="healthStatus" name="healthStatus" class="input-field appearance-none bg-white">
-                            <option value="yes">YES</option>
-                            <option value="no">NO</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="prescriptionTreatment">Has any physician prescribed treatment for you in last two years?</label>
-                        <select id="prescriptionTreatment" name="prescriptionTreatment" class="input-field appearance-none bg-white">
-                            <option value="no">NO</option>
-                            <option value="yes">YES</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="space-y-4 p-4 rounded-lg bg-gray-50">
-                    <h3 class="font-semibold text-base text-gray-700">If YES to prescribed treatment:</h3>
-                    <div class="form-group">
-                        <label for="physicianDetails">Name and address of physician</label>
-                        <input type="text" id="physicianDetails" name="physicianDetails" class="input-field">
-                    </div>
-                    <div class="form-group">
-                        <label for="treatmentReason">For what treated?</label>
-                        <input type="text" id="treatmentReason" name="treatmentReason" class="input-field">
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group">
-                        <label for="alcoholUse">Do you use alcoholic liquors to excess?</label>
-                        <select id="alcoholUse" name="alcoholUse" class="input-field appearance-none bg-white">
-                            <option value="no">NO</option>
-                            <option value="yes">YES</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="drugUse">Narcotics or other drugs?</label>
-                        <select id="drugUse" name="drugUse" class="input-field appearance-none bg-white">
-                            <option value="no">NO</option>
-                            <option value="yes">YES</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="convictedCrime">Have you ever been convicted of a crime or felony?</label>
-                    <select id="convictedCrime" name="convictedCrime" class="input-field appearance-none bg-white">
-                        <option value="no">NO</option>
-                        <option value="yes">YES</option>
-                    </select>
-                </div>
-            </section>
-            
-            <!-- 7. Non-Masonic References (COMPLETE) -->
-            <section class="space-y-6">
-                <h2 class="text-xl font-bold section-header">Non-Masonic References</h2>
-                <p class="font-semibold text-gray-700">Please provide three non-Masonic references:</p>
-                <div class="space-y-4">
-                    <div class="form-group">
-                        <label for="reference1">1. Reference Name & Contact</label>
-                        <input type="text" id="reference1" name="reference1" class="input-field" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="reference2">2. Reference Name & Contact</label>
-                        <input type="text" id="reference2" name="reference2" class="input-field" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="reference3">3. Reference Name & Contact</label>
-                        <input type="text" id="reference3" name="reference3" class="input-field" required>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 8. Applicant Signature & Agreement (COMPLETE) -->
-            <section class="space-y-6 pt-6 border-t border-gray-200">
-                <h2 class="text-xl font-bold section-header">Applicant Covenant</h2>
-                
-                <div class="disclaimer text-sm text-gray-600 bg-red-50 border-red-200">
-                    I certify and warrant the above answers to be true and correct, and agree that the same shall form a part of my application for membership... and I further covenant and agree that in the event any of my answers given above prove to be false or untrue, neither I, my beneficiary, heirs nor legal representatives shall ever assert any claim to the relief benefits provided for by the Order. And the liability of the Society shall be limited to refund of the relief assessments actually paid in by me.
-                </div>
-
-                <div class="form-group">
-                    <label for="signatureApplicant">Signature of Applicant (Type full name to sign)</label>
-                    <input type="text" id="signatureApplicant" name="signatureApplicant" class="input-field font-serif text-lg italic" required>
-                </div>
-            </section>
-
-            <!-- Submit Button -->
-            <div class="flex justify-center pt-8">
-                <button type="submit" id="submitButton" class="w-full sm:w-1/2 px-8 py-4 bg-indigo-700 text-white font-semibold rounded-lg shadow-xl hover:bg-indigo-800 transition duration-300 ease-in-out transform hover:scale-[1.02] tracking-wider disabled:opacity-50" disabled>
-                    Save & Submit Application
-                </button>
             </div>
 
-            <!-- Submission Message Box -->
-            <div id="messageBox" class="hidden mt-6 p-4 text-center text-sm rounded-lg bg-green-100 text-green-700" role="alert">
-                Thank you for applying! Your application has been submitted and saved to the database.
+            <!-- Dues Roster View (Currently Hidden/Connecting) -->
+            <div id="dues-view" class="tab-content hidden p-4 text-center">
+                <p class="text-gray-500">Dues Roster is loading...</p>
             </div>
 
-            <!-- 9. LODGE ADMINISTRATIVE SECTION (NON-APPLICANT) -->
-            <section class="admin-section space-y-6 p-6 mt-12 shadow-inner">
-                <div class="text-center">
-                    <h2 class="text-2xl font-black text-red-700">STOP</h2>
-                    <p class="font-bold text-red-600">FOR LODGE SECRETARY / WORSHIPFUL MASTER USE ONLY</p>
-                    <h2 class="text-2xl font-black text-red-700">STOP</h2>
-                </div>
-                
-                <div class="space-y-4 pt-4 border-t border-red-400">
-                    <h3 class="font-semibold text-lg text-red-800">Investigation Committee</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input type="text" class="input-field" value="Name of Investigation Committee Member 1">
-                        <input type="text" class="input-field" value="Name of Investigation Committee Member 2">
-                        <input type="text" class="input-field" value="Name of Investigation Committee Member 3">
-                    </div>
-                </div>
-
-                <div class="space-y-4 pt-4 border-t border-red-400">
-                    <h3 class="font-semibold text-lg text-red-800">Balloting and Approval</h3>
-                    <div class="form-group">
-                        <label>Applicant Balloted on in meeting held</label>
-                        <input type="text" class="input-field" value="(Month / Day / Year)">
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="form-group">
-                            <label>Approved</label>
-                            <input type="text" class="input-field" value="(Date Approved)">
-                        </div>
-                        <div class="form-group">
-                            <label>Rejected</label>
-                            <input type="text" class="input-field" value="(Date Rejected - Strike out one)">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-4 pt-4 border-t border-red-400">
-                    <h3 class="font-semibold text-lg text-red-800">SPECIAL IMPORTANT NOTICE</h3>
-                    <p class="text-sm text-red-800 font-medium">
-                        (NOTE: GRAND LODGE RELIEF IS NOT PAID IN INSTALLMENTS)
-                    </p>
-                    <p class="text-xs text-red-700">
-                        After applicant has been balloted on by local Lodge and local Lodge has approved petition or elected the said applicant for reinstatement or membership into the Lodge. The local Lodge may proceed to give degrees or add reinstated applicant to the roll of local Lodge. The full amount of Grand Lodge Relief Due, must be sent along with the application for membership after the applicant has been raised to the Master Mason's Degree. For reinstated members, the full amount of Grand Lodge Relief must be sent along with application. 
-                    </p>
-                </div>
-            </section>
-        </form>
+            <!-- Expenses View (Currently Hidden/Connecting) -->
+            <div id="expenses-view" class="tab-content hidden p-4 text-center">
+                <p class="text-gray-500">Expenses list is loading...</p>
+            </div>
+        </main>
     </div>
 
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables provided by the environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        // Ensure firebaseConfig is parsed correctly, defaulting to an empty object if unavailable.
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        // --- GLOBAL VARIABLES (Canvas Environment or Hardcoded Fallback) ---
+        // CRITICAL FIX: We are ensuring that even when running outside the Canvas environment,
+        // it uses your actual configuration and falls back to anonymous sign-in.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lodge-admin-tool';
+        
+        // This attempts to use the Canvas config first, then falls back to your hardcoded config.
+        const firebaseConfig = typeof __firebase_config !== 'undefined' 
+            ? JSON.parse(__firebase_config) 
+            : {
+                apiKey: "AIzaSyBAYN5FX3snNSLDjcxnjT1PNC33Qu5TIWo", // Key from your screenshot
+                authDomain: "hezekiah-lodge-admin.firebaseapp.com",
+                projectId: "hezekiah-lodge-admin",
+                storageBucket: "hezekiah-lodge-admin.appspot.com",
+                messagingSenderId: "599617453177", 
+                appId: "1:599617453177:web:212c4c833d7d75d5069b03"
+            };
+        
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        let db;
-        let auth;
-        let userId = null;
-
-        const form = document.getElementById('membershipApplicationForm');
-        const messageBox = document.getElementById('messageBox');
-        const statusMessage = document.getElementById('statusMessage'); // Renamed from loadingIndicator
-        const submitButton = document.getElementById('submitButton');
+        let db, auth;
+        let currentUserId = null; // Stores the UID once authenticated
         
-        let isAuthReady = false;
+        // --- UI Helper Functions ---
+        function showFatalError(message) {
+            const errorDisplay = document.getElementById('fatal-error-display');
+            errorDisplay.innerHTML = `FATAL ERROR: ${message}`;
+            errorDisplay.classList.remove('hidden');
+        }
 
-        async function initFirebase() {
+        function updateStatus(text, color) {
+            const dot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            
+            dot.className = `status-dot bg-${color}-500`;
+            statusText.textContent = text;
+        }
+
+        // --- FIREBASE INITIALIZATION ---
+        async function initializeFirebase() {
             try {
-                // Check if we have enough config to proceed
-                if (!firebaseConfig.apiKey) {
-                    throw new Error("Firebase configuration is missing or empty. Please ensure the app is properly configured.");
-                }
-
-                // 1. Initialize Firebase
+                // Set debug level for easier console troubleshooting
+                setLogLevel('debug'); 
+                
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-                setLogLevel('debug'); // To see logs in console
                 
-                await setPersistence(auth, browserSessionPersistence);
-                
-                // 2. Authenticate User
+                // 1. Listen for Authentication State Changes
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        updateStatus('Connected', 'green');
+                        console.log(`[AUTH] Successfully signed in. User ID: ${currentUserId} (Anonymous: ${user.isAnonymous})`);
+                        // Proceed to load data ONLY AFTER authentication is confirmed
+                        setupFinancialListeners(currentUserId);
+                    } else {
+                        currentUserId = null;
+                        updateStatus('Logged Out', 'gray');
+                        console.warn("[AUTH] User is logged out.");
+                    }
+                });
+
+                // 2. Initial Sign-in Attempt (Fixing the Auth Failed Error)
                 if (initialAuthToken) {
+                    // Sign in with the custom token provided by the Canvas environment
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
+                    // Since your rules allow it, and your console shows it's enabled, 
+                    // we fall back to anonymous sign-in, which generates a valid auth token.
                     await signInAnonymously(auth);
                 }
 
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        console.log("Firebase initialized. User ID:", userId);
-                        statusMessage.classList.add('hidden'); // Hide status message
-                        form.classList.remove('hidden'); // Show the form
-                        submitButton.disabled = false;
-                        isAuthReady = true;
-                    } else {
-                        console.error("Authentication failed. Cannot get user ID.");
-                        statusMessage.textContent = 'ERROR: Authentication failed. Please refresh the page.';
-                        statusMessage.classList.remove('text-indigo-600', 'border-indigo-300');
-                        statusMessage.classList.add('bg-red-100', 'text-red-700', 'border-red-500');
-                        submitButton.disabled = true;
-                    }
-                });
-                
             } catch (error) {
-                console.error("Firebase Initialization Error:", error);
-                statusMessage.textContent = `FATAL ERROR: Database connection failed. Details: ${error.message}`;
-                statusMessage.classList.remove('text-indigo-600', 'border-indigo-300');
-                statusMessage.classList.add('bg-red-100', 'text-red-700', 'border-red-500');
-                form.classList.add('hidden'); // Ensure form remains hidden on error
-                submitButton.disabled = true;
+                console.error("FATAL FIREBASE INIT ERROR:", error);
+                updateStatus('ERROR', 'red');
+                showFatalError(`Initialization failed. Check console for configuration details. Error: ${error.message}`);
             }
         }
 
-        function validateForm() {
-            // This function exists for non-native validation checks (like checking if a radio button group is selected)
-            // Native HTML5 validation will handle required inputs.
-            const maritalStatusRadios = document.getElementsByName('maritalStatus');
-            const isMaritalStatusSelected = Array.from(maritalStatusRadios).some(radio => radio.checked);
-            
-            if (!isMaritalStatusSelected) {
-                // Highlight marital status section if missing, but primarily rely on browser validation
-                return false;
-            }
-            return true;
-        }
+        // --- FIRESTORE DATA LISTENERS ---
+        function setupFinancialListeners(userId) {
+            if (!db || !userId) return;
 
-        async function saveApplication(data) {
-            if (!db || !userId) {
-                return { success: false, error: "Database not ready. Please wait for initialization." };
-            }
-            
-            try {
-                // Public Collection: /artifacts/{appId}/public/data/applications
-                const collectionPath = `/artifacts/${appId}/public/data/applications`;
-                
-                // Create a clean document ID using the applicant's name and a timestamp
-                const docId = `${data.printName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 30)}-${Date.now()}`;
-                const docRef = doc(collection(db, collectionPath), docId);
+            // Define the private collection path for expenses
+            const expensesCollectionPath = `/artifacts/${appId}/users/${userId}/expenses`;
+            const expensesQuery = query(collection(db, expensesCollectionPath));
 
-                await setDoc(docRef, {
-                    ...data,
-                    applicantId: userId,
-                    submissionDate: new Date().toISOString()
+            // Setup real-time listener for Expenses
+            onSnapshot(expensesQuery, (snapshot) => {
+                let totalExpenses = 0;
+                const expensesList = [];
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const amount = data.amount || 0;
+                    totalExpenses += amount;
+                    expensesList.push(data); // In a real app, you'd render this list
                 });
 
-                console.log("Document successfully written with ID:", docRef.id);
-                return { success: true };
+                // Display summary data
+                document.getElementById('total-expenses').textContent = `-$${totalExpenses.toFixed(2)}`;
+                updateNetBalance(0, totalExpenses);
 
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                return { success: false, error: e.message };
-            }
+                console.log(`[FIRESTORE] Expenses loaded. Total: $${totalExpenses.toFixed(2)}`);
+            }, (error) => {
+                console.error("[FIRESTORE] Error fetching expenses:", error);
+                updateStatus('DB Error', 'red');
+                showFatalError(`Could not load expenses data. Details: ${error.message}`);
+            });
+            
+            // --- DUES Listener Placeholder (Since there is no Dues data to fetch yet) ---
+            document.getElementById('dues-view').innerHTML = `<p class="text-gray-500">Successfully connected to DB. User ID: ${userId}. Roster data goes here.</p>`;
+
         }
 
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault(); 
+        // Placeholder for net balance calculation (assumes dues are 0 for now)
+        function updateNetBalance(dues, expenses) {
+            const net = dues - expenses;
+            const netBalanceEl = document.getElementById('net-balance');
+            netBalanceEl.textContent = `$${net.toFixed(2)}`;
+            netBalanceEl.classList.remove('text-green-600', 'text-red-600', 'text-gray-600');
+            netBalanceEl.classList.add(net >= 0 ? 'text-green-600' : 'text-red-600');
             
-            if (!isAuthReady) {
-                 messageBox.className = 'mt-6 p-4 text-center text-sm rounded-lg bg-red-100 text-red-700';
-                 messageBox.textContent = 'Please wait for the database connection to initialize.';
-                 messageBox.classList.remove('hidden');
-                 return;
-            }
+            document.getElementById('total-dues').textContent = `$${dues.toFixed(2)}`;
+        }
 
-            // 1. Validation Check
-            if (!form.checkValidity() || !validateForm()) {
-                messageBox.className = 'mt-6 p-4 text-center text-sm rounded-lg bg-red-100 text-red-700';
-                messageBox.textContent = 'Please fill out all required fields.';
-                messageBox.classList.remove('hidden');
+        // --- FORM SUBMISSION HANDLER ---
+        window.recordExpense = async (event) => {
+            event.preventDefault();
+            if (!currentUserId) {
+                alert("Please wait for Firebase connection before submitting.");
                 return;
             }
 
-            submitButton.disabled = true;
-            submitButton.textContent = 'Saving...';
-            messageBox.classList.add('hidden');
-
-            // 2. Prepare Data
-            const formData = new FormData(form);
-            const data = {};
-            for (let [key, value] of formData.entries()) {
-                data[key] = value;
+            const amount = parseFloat(document.getElementById('expense-amount').value);
+            const description = document.getElementById('expense-description').value;
+            
+            if (isNaN(amount) || amount <= 0) {
+                alert("Please enter a valid amount.");
+                return;
             }
             
-            // 3. Save to Firestore
-            const result = await saveApplication(data);
+            const submitBtn = document.getElementById('expense-submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Recording...';
 
-            // 4. Handle Result
-            if (result.success) {
-                messageBox.className = 'mt-6 p-4 text-center text-sm rounded-lg bg-green-100 text-green-700';
-                messageBox.textContent = 'Success! Your application has been submitted and saved to the database.';
-                form.reset(); // Clear the form after success
-            } else {
-                messageBox.className = 'mt-6 p-4 text-center text-sm rounded-lg bg-red-100 text-red-700';
-                messageBox.textContent = `Submission failed: ${result.error}. Please try again.`;
+            try {
+                const expensesCollectionPath = `/artifacts/${appId}/users/${currentUserId}/expenses`;
+                await addDoc(collection(db, expensesCollectionPath), {
+                    amount: amount,
+                    description: description,
+                    timestamp: new Date().toISOString()
+                });
+                
+                document.getElementById('expense-form').reset();
+                console.log("Expense recorded successfully.");
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                alert(`Failed to record expense: ${e.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Record Expense';
             }
-            
-            messageBox.classList.remove('hidden');
-            submitButton.textContent = 'Save & Submit Application';
-            submitButton.disabled = false;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
+        };
 
-        // Start initialization when the page loads
-        initFirebase();
+        // --- Tab Switching Logic ---
+        window.showTab = (tabId) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`${tabId}-view`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+        };
+
+        // Initialize Firebase on load
+        initializeFirebase();
+
     </script>
 </body>
 </html>
