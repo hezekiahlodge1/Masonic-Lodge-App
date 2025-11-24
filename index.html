@@ -609,8 +609,7 @@
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // --- CRITICAL FIX: Bypass custom token and use Anonymous sign-in ---
-                // We know Anonymous is enabled in your project
+                // Use Anonymous sign-in
                 const userCredential = await signInAnonymously(auth);
 
                 if (userCredential && userCredential.user && userCredential.user.uid) {
@@ -683,18 +682,19 @@
                 // Add System Metadata
                 data.applicantId = userId;
                 data.submissionDate = serverTimestamp();
-                data.appId = appId;
+                data.appId = appId; // Essential for the dashboard to filter
                 data.status = 'Pending Review';
 
                 // 3. Save to Firestore
-                // Path: /artifacts/{appId}/users/{userId}/applications
-                const collectionPath = `/artifacts/${appId}/users/${userId}/applications`;
+                // *** CRITICAL FIX: SAVING TO PUBLIC/SHARED PATH FOR ADMIN ACCESS ***
+                // Path: /artifacts/{appId}/public/data/applications
+                const collectionPath = `/artifacts/${appId}/public/data/applications`;
                 const collectionRef = collection(db, collectionPath);
                 
                 await addDoc(collectionRef, data);
 
                 // 4. Success Message
-                messageBox.textContent = 'Success! Your application has been submitted and saved to the database.';
+                messageBox.textContent = 'Success! Your application has been submitted and saved to the database for review.';
                 messageBox.className = "mt-6 p-4 text-center text-sm rounded-lg bg-green-100 text-green-700 block";
                 form.reset();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
