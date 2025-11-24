@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masonic Applications Admin Dashboard</title>
+    <title>King Hezekiah Lodge No. 1 Application Review Dashboard</title>
     <!-- Load Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -40,9 +40,9 @@
     <div class="max-w-7xl mx-auto bg-white shadow-2xl rounded-xl p-6 sm:p-10">
         
         <header class="text-center mb-8 border-b pb-4">
-            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800">Application Review Dashboard</h1>
-            <p class="text-gray-500 mt-2 text-lg">View and manage submitted membership applications.</p>
-            <p id="userIdDisplay" class="text-xs text-gray-400 mt-1">User ID: Loading...</p>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800">King Hezekiah Lodge No. 1</h1>
+            <p class="text-gray-500 mt-1 text-lg">Application Review Dashboard</p>
+            <p id="userIdDisplay" class="text-xs text-gray-400 mt-2 p-1 bg-gray-100 rounded-md inline-block">User ID: Authenticating...</p>
         </header>
 
         <!-- Loading/Error Indicator -->
@@ -65,6 +65,9 @@
                 </thead>
                 <tbody id="applicationsTableBody" class="bg-white divide-y divide-gray-200">
                     <!-- Data will be inserted here by JavaScript -->
+                    <tr>
+                        <td colspan="6" class="p-4 text-center text-gray-500 italic" id="emptyRow">Loading data...</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -72,7 +75,7 @@
         <!-- Detail Modal (for viewing full application data) -->
         <div id="detailModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center p-4">
             <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div class="p-6 border-b flex justify-between items-center">
+                <div class="p-6 border-b flex justify-between items-center sticky top-0 bg-white">
                     <h2 class="text-xl font-bold text-gray-800">Application Details</h2>
                     <button onclick="document.getElementById('detailModal').classList.add('hidden')" class="text-gray-500 hover:text-gray-700 font-bold text-2xl">&times;</button>
                 </div>
@@ -87,10 +90,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Imports only needed for simple collection query
+        import { getFirestore, collection, query, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; 
 
         // Environment variables
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lodge-membership-app';
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
@@ -102,6 +106,7 @@
         const detailModal = document.getElementById('detailModal');
         const modalContent = document.getElementById('modalContent');
         const userIdDisplay = document.getElementById('userIdDisplay');
+        const emptyRow = document.getElementById('emptyRow');
 
         // Set log level to see Firebase operations in console
         setLogLevel('debug');
@@ -113,12 +118,17 @@
             let html = '<dl class="divide-y divide-gray-100">';
             for (const key in data) {
                 // Skip internal Firebase keys or unnecessary display keys
-                if (key.startsWith('applicantId') || key.startsWith('submissionDate')) continue;
+                if (key.startsWith('applicantId') || key.startsWith('appId') || key.startsWith('submissionDate')) continue;
 
                 // Format key to be human readable
                 const readableKey = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
                 let value = data[key] || "N/A";
                 
+                // Handle timestamp object from serverTimestamp()
+                if (value && typeof value === 'object' && value.seconds) {
+                    value = new Date(value.seconds * 1000).toLocaleString();
+                }
+
                 // Special formatting for large text fields
                 if (value && typeof value === 'string' && value.length > 100) {
                     value = `<p class="whitespace-pre-wrap mt-1 p-2 bg-gray-50 rounded-md">${value}</p>`;
@@ -145,34 +155,44 @@
 
 
         /**
-         * Fetches and displays all submitted applications from Firestore.
+         * Fetches and displays all submitted applications from Firestore using the public collection.
          */
         async function fetchApplications() {
-            if (!db) {
-                statusMessage.textContent = "Error: Database not connected.";
-                statusMessage.classList.remove('bg-indigo-50');
-                statusMessage.classList.add('bg-red-100', 'text-red-700');
-                return;
-            }
+            if (!db) return; // Guard clause
 
             try {
-                // Public data collection path
+                emptyRow.textContent = "Fetching applications...";
+
+                // --- FIX: Query the public collection directly ---
+                // Applications are now saved to: /artifacts/{appId}/public/data/applications
                 const collectionPath = `/artifacts/${appId}/public/data/applications`;
-                const q = query(collection(db, collectionPath));
+                const applicationsRef = collection(db, collectionPath);
+                
+                const q = query(applicationsRef); // Simple query on the public collection
                 
                 const querySnapshot = await getDocs(q);
 
+                tableBody.innerHTML = ''; // Clear previous data
+
                 if (querySnapshot.empty) {
-                    statusMessage.textContent = "No applications found yet. Share the application link!";
-                    statusMessage.classList.remove('bg-indigo-50');
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="6" class="p-4 text-center text-gray-500 italic">No applications found yet.</td>`;
+                    tableBody.appendChild(row);
+                    statusMessage.textContent = "No applications found yet. Submit one using the form to see it appear here.";
+                    statusMessage.classList.remove('bg-indigo-50', 'text-indigo-600');
                     statusMessage.classList.add('bg-yellow-100', 'text-yellow-700');
                     return;
                 }
-
-                tableBody.innerHTML = ''; // Clear previous data
+                
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    const submissionDate = data.submissionDate ? new Date(data.submissionDate).toLocaleDateString() : 'N/A';
+                    
+                    // Handle serverTimestamp
+                    const dateObject = data.submissionDate?.toDate ? data.submissionDate.toDate() : new Date();
+                    const submissionDate = dateObject.toLocaleDateString();
+
+                    // Convert data to a stringified object for the inline click handler, ensuring proper escaping
+                    const cleanData = JSON.stringify(data).replace(/'/g, '\\\'');
                     
                     const row = document.createElement('tr');
                     row.className = 'table-row-data';
@@ -186,7 +206,7 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${data.maritalStatus ? data.maritalStatus.charAt(0).toUpperCase() + data.maritalStatus.slice(1) : 'N/A'}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button class="text-indigo-600 hover:text-indigo-900 font-semibold" 
-                                onclick='window.openDetails(${JSON.stringify(data)})'>
+                                onclick='window.openDetails(${cleanData})'>
                                 View Full
                             </button>
                         </td>
@@ -195,12 +215,12 @@
                 });
 
                 statusMessage.textContent = `Successfully loaded ${querySnapshot.size} applications.`;
-                statusMessage.classList.remove('bg-indigo-50', 'text-indigo-600');
+                statusMessage.classList.remove('bg-indigo-50', 'text-indigo-600', 'bg-red-100', 'text-red-700');
                 statusMessage.classList.add('bg-green-100', 'text-green-700');
 
             } catch (error) {
                 console.error("Error fetching documents:", error);
-                statusMessage.textContent = "Error loading applications. Check console for details.";
+                statusMessage.textContent = `Error loading applications: ${error.message}`;
                 statusMessage.classList.remove('bg-indigo-50');
                 statusMessage.classList.add('bg-red-100', 'text-red-700');
             }
@@ -216,7 +236,7 @@
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
-                // 2. Authenticate User (Admin view uses anonymous or custom token)
+                // 2. Authenticate User 
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
