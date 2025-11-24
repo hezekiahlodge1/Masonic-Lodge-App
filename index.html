@@ -77,11 +77,13 @@
             <p class="text-xs text-gray-500 mt-2">Ancient Free and Accepted Scottish Rite / Member of the General Grand Masonic Congress</p>
         </header>
 
-        <form id="membershipApplicationForm" class="space-y-10">
-            <!-- Loading Indicator -->
-            <div id="loadingIndicator" class="text-center p-4 text-indigo-600 font-medium">
-                Initializing database...
-            </div>
+        <!-- Loading/Error Indicator (Always visible until initialization is complete) -->
+        <div id="statusMessage" class="text-center p-4 text-indigo-600 font-medium text-xl border border-indigo-300 rounded-lg mb-8">
+            Initializing database connection...
+        </div>
+
+        <!-- Main Form Container - Hidden by default -->
+        <form id="membershipApplicationForm" class="space-y-10 hidden">
             
             <!-- 1. Lodge Information & Date -->
             <section class="space-y-6">
@@ -557,10 +559,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global variables provided by the environment
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // Ensure firebaseConfig is parsed correctly, defaulting to an empty object if unavailable.
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
@@ -570,13 +573,18 @@
 
         const form = document.getElementById('membershipApplicationForm');
         const messageBox = document.getElementById('messageBox');
-        const loadingIndicator = document.getElementById('loadingIndicator');
+        const statusMessage = document.getElementById('statusMessage'); // Renamed from loadingIndicator
         const submitButton = document.getElementById('submitButton');
         
         let isAuthReady = false;
 
         async function initFirebase() {
             try {
+                // Check if we have enough config to proceed
+                if (!firebaseConfig.apiKey) {
+                    throw new Error("Firebase configuration is missing or empty. Please ensure the app is properly configured.");
+                }
+
                 // 1. Initialize Firebase
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -596,35 +604,37 @@
                     if (user) {
                         userId = user.uid;
                         console.log("Firebase initialized. User ID:", userId);
-                        loadingIndicator.textContent = 'Ready to submit application.';
+                        statusMessage.classList.add('hidden'); // Hide status message
+                        form.classList.remove('hidden'); // Show the form
                         submitButton.disabled = false;
                         isAuthReady = true;
                     } else {
                         console.error("Authentication failed. Cannot get user ID.");
-                        loadingIndicator.textContent = 'Error: Could not authenticate user.';
+                        statusMessage.textContent = 'ERROR: Authentication failed. Please refresh the page.';
+                        statusMessage.classList.remove('text-indigo-600', 'border-indigo-300');
+                        statusMessage.classList.add('bg-red-100', 'text-red-700', 'border-red-500');
                         submitButton.disabled = true;
                     }
                 });
                 
             } catch (error) {
                 console.error("Firebase Initialization Error:", error);
-                loadingIndicator.textContent = 'Fatal Error: Database connection failed.';
+                statusMessage.textContent = `FATAL ERROR: Database connection failed. Details: ${error.message}`;
+                statusMessage.classList.remove('text-indigo-600', 'border-indigo-300');
+                statusMessage.classList.add('bg-red-100', 'text-red-700', 'border-red-500');
+                form.classList.add('hidden'); // Ensure form remains hidden on error
                 submitButton.disabled = true;
             }
         }
 
         function validateForm() {
-            // Check essential fields like name and marital status
-            if (!document.getElementById('printName').value) return false;
+            // This function exists for non-native validation checks (like checking if a radio button group is selected)
+            // Native HTML5 validation will handle required inputs.
             const maritalStatusRadios = document.getElementsByName('maritalStatus');
             const isMaritalStatusSelected = Array.from(maritalStatusRadios).some(radio => radio.checked);
             
             if (!isMaritalStatusSelected) {
-                // Highlight marital status section if missing
-                const maritalSection = document.getElementById('maritalStatus').closest('section');
-                if (maritalSection) {
-                    maritalSection.scrollIntoView({ behavior: 'smooth' });
-                }
+                // Highlight marital status section if missing, but primarily rely on browser validation
                 return false;
             }
             return true;
@@ -639,8 +649,8 @@
                 // Public Collection: /artifacts/{appId}/public/data/applications
                 const collectionPath = `/artifacts/${appId}/public/data/applications`;
                 
-                // Create a clean document ID
-                const docId = `${data.printName.replace(/[^a-zA-Z0-9]/g, '')}-${Date.now()}`;
+                // Create a clean document ID using the applicant's name and a timestamp
+                const docId = `${data.printName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 30)}-${Date.now()}`;
                 const docRef = doc(collection(db, collectionPath), docId);
 
                 await setDoc(docRef, {
