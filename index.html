@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Updated Title -->
     <title>King Hezekiah Lodge No. 1 Application for Membership</title>
-    <!-- Load Tailwind CSS for modern styling and responsiveness -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom font and base styles */
@@ -14,9 +12,8 @@
             font-family: 'Inter', sans-serif;
             background-color: #f0f4f8; /* Light blue-gray background */
         }
-        /* Style for all input fields and textareas */
         .input-field {
-            border: 1px solid #c8d2e0; /* Softer border */
+            border: 1px solid #c8d2e0; 
             border-radius: 0.5rem;
             padding: 0.75rem;
             width: 100%;
@@ -24,7 +21,7 @@
             transition: all 0.2s ease-in-out;
         }
         .input-field:focus {
-            border-color: #2563eb; /* Blue focus ring */
+            border-color: #2563eb; 
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
             outline: none;
         }
@@ -33,11 +30,10 @@
             color: #374151;
             margin-bottom: 0.25rem;
             display: block;
-            line-height: 1.5; /* Ensure readability */
+            line-height: 1.5;
         }
-        /* Specific styling for the header block */
         .header-block {
-            background-color: #1f2937; /* Dark background for distinction */
+            background-color: #1f2937; 
             color: #f9fafb;
             border-radius: 0.75rem;
         }
@@ -55,9 +51,9 @@
             border-radius: 0.5rem;
         }
         .admin-section {
-            background-color: #ffe4e6; /* Light red/pink to mark administrative only */
+            background-color: #ffe4e6; 
             border: 3px solid #ef4444;
-            pointer-events: none; /* Prevents user interaction */
+            pointer-events: none; 
         }
         .admin-section .input-field {
             background-color: #fecaca;
@@ -71,10 +67,9 @@
         <!-- Header and Emblem -->
         <header class="header-block text-center p-6 mb-8">
             <div class="text-4xl mb-3">
-                <span style="font-size: 3rem;">&#9874;</span> <!-- Compass and Square -->
+                <span style="font-size: 3rem;">&#9874;</span>
             </div>
             <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">APPLICATION FOR MEMBERSHIP</h1>
-            <!-- Updated Lodge Name -->
             <p class="text-xl mt-1 font-bold text-gray-200">King Hezekiah Lodge No. 1</p>
             <p class="text-sm mt-2 text-gray-400">A. F. & A. M. of Texas and the U. S. A.</p>
             <p class="text-xs text-gray-500 mt-1">Ancient Free and Accepted Scottish Rite / York Rite / Member of the General Grand Masonic Congress</p>
@@ -93,11 +88,10 @@
 
         <!-- Main Form Container - Hidden by default until Auth succeeds -->
         <form id="membershipApplicationForm" class="space-y-10 hidden">
+            <!-- Form Sections (Content omitted for brevity but remains the same as previous file) -->
             
-            <!-- 1. Lodge Information & Date -->
             <section class="space-y-6">
                 <h2 class="text-xl font-bold section-header">Lodge Information</h2>
-                
                 <div class="form-group">
                     <label for="lodgeName">IN Lodge Name</label>
                     <input type="text" id="lodgeName" name="lodgeName" placeholder="Name of Lodge" class="input-field" required>
@@ -112,7 +106,6 @@
                         <input type="date" id="applicationDate" name="applicationDate" class="input-field" required>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-group md:col-span-2">
                         <label for="lodgeAddress">Address</label>
@@ -137,28 +130,22 @@
                 </div>
             </section>
             
-            <!-- 2. Recommended By & WM/Secretary Info -->
             <section class="space-y-6">
                 <h2 class="text-xl font-bold section-header">Recommendations & Lodge Contact</h2>
-                
                 <p class="font-semibold text-gray-700">Recommended By (Four Brother's Names and Addresses):</p>
                 <div class="space-y-3">
-                    <!-- Recommended By 1 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input type="text" id="rec1Name" name="rec1Name" class="input-field" placeholder="Brother's Name 1" required>
                         <input type="text" id="rec1Address" name="rec1Address" class="input-field" placeholder="Address / City/State/ZIP 1" required>
                     </div>
-                    <!-- Recommended By 2 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input type="text" id="rec2Name" name="rec2Name" class="input-field" placeholder="Brother's Name 2" required>
                         <input type="text" id="rec2Address" name="rec2Address" class="input-field" placeholder="Address / City/State/ZIP 2" required>
                     </div>
-                    <!-- Recommended By 3 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input type="text" id="rec3Name" name="rec3Name" class="input-field" placeholder="Brother's Name 3" required>
                         <input type="text" id="rec3Address" name="rec3Address" class="input-field" placeholder="Address / City/State/ZIP 3" required>
                     </div>
-                    <!-- Recommended By 4 -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input type="text" id="rec4Name" name="rec4Name" class="input-field" placeholder="Brother's Name 4" required>
                         <input type="text" id="rec4Address" name="rec4Address" class="input-field" placeholder="Address / City/State/ZIP 4" required>
@@ -181,14 +168,9 @@
                 </div>
             </section>
 
-            <!-- 3. Applicant Personal Details -->
             <section class="space-y-6">
                 <h2 class="text-xl font-bold section-header">Applicant Personal Details</h2>
-                
-                <p class="disclaimer">
-                    All applicants to join the order shall be required to fill in the application and take a background check in their own handwriting, or cause the same to be done over their signature.
-                </p>
-
+                <p class="disclaimer">All applicants to join the order shall be required to fill in the application and take a background check in their own handwriting, or cause the same to be done over their signature.</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-group">
                         <label for="printName">Applicant Name (PRINT OR TYPE NAME)</label>
@@ -207,7 +189,6 @@
                         <input type="date" id="dob" name="dob" class="input-field">
                     </div>
                 </div>
-                
                 <div class="form-group">
                     <label for="streetAddress">Street Address</label>
                     <input type="text" id="streetAddress" name="streetAddress" class="input-field">
@@ -232,10 +213,8 @@
                 </div>
             </section>
 
-            <!-- 4. Marital and Family Status -->
             <section class="space-y-6">
                 <h2 class="text-xl font-bold section-header">Marital and Family Status</h2>
-                
                 <div class="form-group space-y-2">
                     <label>2. Marital Status</label>
                     <div class="flex flex-wrap gap-4">
@@ -350,10 +329,8 @@
                 
             </section>
 
-            <!-- 5. Employment and Prior Membership -->
             <section class="space-y-6">
                 <h2 class="text-xl font-bold section-header">Employment and Prior Membership</h2>
-
                 <div class="form-group">
                     <label for="occupation">Occupation</label>
                     <input type="text" id="occupation" name="occupation" class="input-field">
@@ -372,7 +349,6 @@
                         <input type="text" id="priorEmployer" name="priorEmployer" class="input-field">
                     </div>
                 </div>
-
                 <div class="form-group pt-4 border-t">
                     <label class="block mb-2">Have you ever made application to join a Masonic Lodge before?</label>
                     <div class="flex gap-4 mb-4">
@@ -385,7 +361,6 @@
                             <span class="ml-2">NO</span>
                         </label>
                     </div>
-                    
                     <div class="space-y-4 p-4 rounded-lg bg-gray-50">
                         <h3 class="font-semibold text-base text-gray-700">(a) If YES:</h3>
                         <div class="form-group">
@@ -393,7 +368,6 @@
                             <input type="text" id="priorLodgeName" name="priorLodgeName" placeholder="Name, City, State - Year" class="input-field">
                         </div>
                     </div>
-                    
                     <div class="space-y-4 p-4 rounded-lg bg-gray-50 mt-4">
                         <h3 class="font-semibold text-base text-gray-700">(b) If reinstating:</h3>
                         <div class="form-group">
@@ -412,10 +386,8 @@
                 </div>
             </section>
             
-            <!-- 6. Health and Conduct -->
             <section class="space-y-6">
                 <h2 class="text-xl font-bold section-header">Health and Conduct</h2>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-group">
                         <label for="healthStatus">Are you in good health?</label>
@@ -432,7 +404,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="space-y-4 p-4 rounded-lg bg-gray-50">
                     <h3 class="font-semibold text-base text-gray-700">If YES to prescribed treatment:</h3>
                     <div class="form-group">
@@ -444,7 +415,6 @@
                         <input type="text" id="treatmentReason" name="treatmentReason" class="input-field">
                     </div>
                 </div>
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="form-group">
                         <label for="alcoholUse">Do you use alcoholic liquors to excess?</label>
@@ -461,7 +431,6 @@
                         </select>
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label for="convictedCrime">Have you ever been convicted of a crime or felony?</label>
                     <select id="convictedCrime" name="convictedCrime" class="input-field appearance-none bg-white">
@@ -471,7 +440,6 @@
                 </div>
             </section>
             
-            <!-- 7. Non-Masonic References -->
             <section class="space-y-6">
                 <h2 class="text-xl font-bold section-header">Non-Masonic References</h2>
                 <p class="font-semibold text-gray-700">Please provide three non-Masonic references:</p>
@@ -491,7 +459,6 @@
                 </div>
             </section>
 
-            <!-- 8. Applicant Signature & Agreement -->
             <section class="space-y-6 pt-6 border-t border-gray-200">
                 <h2 class="text-xl font-bold section-header">Applicant Covenant</h2>
                 
@@ -566,18 +533,35 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // NOTE: signInWithCustomToken is added to imports
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, addDoc, collection, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Set Firebase logging level for debugging (optional, but useful)
         setLogLevel('debug');
 
-        // --- 1. CANVAS/ENVIRONMENT VARIABLES (USING THE PROVIDED GLOBALS) ---
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lodge-membership-app';
-        // IMPORTANT FIX: Use the environment-provided configuration
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // =========================================================================================
+        // IMPORTANT: FIREBASE CONFIGURATION CHECK
+        // If the environment variables are not available (i.e., you run this outside of the Canvas),
+        // you MUST provide your configuration here.
+        // Get your config from Firebase Console -> Project Settings -> General.
+        // =========================================================================================
+        const YOUR_EXTERNAL_FIREBASE_CONFIG = {
+            apiKey: "YOUR_API_KEY_HERE",           // <-- PASTE YOUR KEY HERE
+            authDomain: "YOUR_AUTH_DOMAIN_HERE",   // <-- PASTE YOUR AUTH DOMAIN HERE
+            projectId: "YOUR_PROJECT_ID_HERE",     // <-- PASTE YOUR PROJECT ID HERE
+            storageBucket: "YOUR_STORAGE_BUCKET_HERE",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID_HERE",
+            appId: "YOUR_APP_ID_HERE"
+        };
+        // =========================================================================================
+
+
+        // --- 1. CANVAS/ENVIRONMENT VARIABLES (PREFER THIS WHEN AVAILABLE) ---
+        // Determine the operating mode: Canvas or External
+        const isCanvasMode = typeof __firebase_config !== 'undefined' && __firebase_config.length > 0;
+        
+        const appId = isCanvasMode ? (typeof __app_id !== 'undefined' ? __app_id : 'lodge-membership-app') : YOUR_EXTERNAL_FIREBASE_CONFIG.projectId;
+        const firebaseConfig = isCanvasMode ? JSON.parse(__firebase_config) : YOUR_EXTERNAL_FIREBASE_CONFIG;
+        const initialAuthToken = isCanvasMode ? (typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null) : null;
         
         let db, auth;
         let userId = null;
@@ -596,9 +580,9 @@
          */
         async function initFirebase() {
             try {
-                // Check if configuration is available
-                if (!firebaseConfig || !Object.keys(firebaseConfig).length) {
-                    throw new Error("Firebase configuration is missing or empty.");
+                // Check for valid configuration in External mode
+                if (!isCanvasMode && (firebaseConfig.apiKey === "YOUR_API_KEY_HERE" || !firebaseConfig.projectId)) {
+                    throw new Error("Firebase configuration is missing or empty. When running externally, please update the YOUR_EXTERNAL_FIREBASE_CONFIG block in the script.");
                 }
 
                 // Initialize services
@@ -608,10 +592,11 @@
 
                 let userCredential;
 
-                // Authenticate using the custom token if available, otherwise use Anonymous
-                if (initialAuthToken) {
+                // Authenticate: Custom Token (Canvas) or Anonymous (Canvas fallback / External)
+                if (initialAuthToken && isCanvasMode) {
                     userCredential = await signInWithCustomToken(auth, initialAuthToken);
                 } else {
+                    // This covers Canvas fallback and all External runs
                     userCredential = await signInAnonymously(auth);
                 }
 
@@ -620,8 +605,9 @@
                     console.log("Authentication SUCCESS. User ID:", userId);
                     
                     // Success: Reveal the form and update status
-                    statusMessage.textContent = `Connected successfully as User ID: ${userId}`;
-                    statusMessage.classList.add('bg-green-100', 'text-green-700');
+                    statusMessage.textContent = `Connected successfully. User ID: ${userId}`;
+                    statusMessage.classList.remove('text-indigo-600', 'border-indigo-300');
+                    statusMessage.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
                     
                     // Only reveal form/enable button after successful connection
                     setTimeout(() => {
@@ -637,14 +623,11 @@
                 console.error("Firebase Authentication/Initialization Error:", error);
                 
                 // Show user-friendly error
-                let friendlyError = `Authentication failed. Code: ${error.code || 'unknown'}.`;
-                if (error.code === 'auth/network-request-failed') {
-                    friendlyError = "Network Error: Please check your internet connection.";
-                }
+                let friendlyError = error.message;
 
                 statusMessage.classList.add('hidden');
                 errorDisplay.classList.remove('hidden');
-                errorText.textContent = `${friendlyError} Details: ${error.message}`;
+                errorText.textContent = friendlyError;
             }
         }
         
@@ -652,7 +635,7 @@
          * Validates the form before submission (Placeholder for deeper validation)
          */
         function validateForm() {
-             // For now, rely on HTML5 required attributes for basic validation
+             // Rely on HTML5 required attributes for basic validation
             return form.checkValidity();
         }
 
@@ -665,7 +648,7 @@
             // 1. Basic UI updates
             messageBox.classList.add('hidden');
             if (!validateForm()) {
-                messageBox.textContent = "Please fill out all required fields marked with an asterisk or red border.";
+                messageBox.textContent = "Please fill out all required fields.";
                 messageBox.className = "mt-6 p-4 text-center text-sm rounded-lg bg-red-100 text-red-700 block";
                 return;
             }
@@ -679,7 +662,7 @@
                 const formData = new FormData(form);
                 const data = {};
                 for (let [key, value] of formData.entries()) {
-                    // Skip data collection for the administrative section (section 9, which is static/read-only)
+                    // Skip data collection for the administrative section 
                     if (key.includes('admin') || key.includes('committee') || key.includes('ballot')) continue; 
                     data[key] = value;
                 }
