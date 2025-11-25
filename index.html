@@ -566,26 +566,18 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // NOTE: signInWithCustomToken is added to imports
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, addDoc, collection, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Set Firebase logging level for debugging (optional, but useful)
         setLogLevel('debug');
 
-        // --- 1. USER-PROVIDED FIREBASE CONFIGURATION ---
-        // This is the correct configuration found in your console
-        const firebaseConfig = {
-            apiKey: "AIzaSyBAYN5FX3snNSLDjcxnjT1PNC33Qu5TlWo",
-            authDomain: "hezekiah-lodge-admin.firebaseapp.com",
-            projectId: "hezekiah-lodge-admin",
-            storageBucket: "hezekiah-lodge-admin.firebasestorage.app",
-            messagingSenderId: "599617453177",
-            appId: "1:599617453177:web:7ff088d9ac115427aca8a8",
-            measurementId: "G-BZB6H3N8ZZ"
-        };
-        
-        // --- 2. CANVAS ENVIRONMENT VARIABLES ---
+        // --- 1. CANVAS/ENVIRONMENT VARIABLES (USING THE PROVIDED GLOBALS) ---
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'lodge-membership-app';
+        // IMPORTANT FIX: Use the environment-provided configuration
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
         let db, auth;
         let userId = null;
@@ -604,28 +596,41 @@
          */
         async function initFirebase() {
             try {
+                // Check if configuration is available
+                if (!firebaseConfig || !Object.keys(firebaseConfig).length) {
+                    throw new Error("Firebase configuration is missing or empty.");
+                }
+
                 // Initialize services
                 const app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
-                // Use Anonymous sign-in
-                const userCredential = await signInAnonymously(auth);
+                let userCredential;
+
+                // Authenticate using the custom token if available, otherwise use Anonymous
+                if (initialAuthToken) {
+                    userCredential = await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    userCredential = await signInAnonymously(auth);
+                }
 
                 if (userCredential && userCredential.user && userCredential.user.uid) {
                     userId = userCredential.user.uid;
-                    console.log("Authentication SUCCESS (Anonymous). User ID:", userId);
+                    console.log("Authentication SUCCESS. User ID:", userId);
                     
                     // Success: Reveal the form and update status
                     statusMessage.textContent = `Connected successfully as User ID: ${userId}`;
                     statusMessage.classList.add('bg-green-100', 'text-green-700');
+                    
+                    // Only reveal form/enable button after successful connection
                     setTimeout(() => {
                         statusMessage.classList.add('hidden');
                         form.classList.remove('hidden');
-                        submitButton.disabled = false;
-                    }, 500); // Wait briefly before hiding status
+                        submitButton.disabled = false; // <<< THIS ENABLES THE BUTTON
+                    }, 500); 
                 } else {
-                    throw new Error("Authentication succeeded but user ID is missing.");
+                    throw new Error("Authentication failed or returned no user.");
                 }
 
             } catch (error) {
@@ -686,7 +691,6 @@
                 data.status = 'Pending Review';
 
                 // 3. Save to Firestore
-                // *** CRITICAL FIX: SAVING TO PUBLIC/SHARED PATH FOR ADMIN ACCESS ***
                 // Path: /artifacts/{appId}/public/data/applications
                 const collectionPath = `/artifacts/${appId}/public/data/applications`;
                 const collectionRef = collection(db, collectionPath);
