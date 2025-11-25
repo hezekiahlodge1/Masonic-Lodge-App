@@ -71,8 +71,8 @@
             </div>
             <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">APPLICATION FOR MEMBERSHIP</h1>
             <p class="text-xl mt-1 font-bold text-gray-200">King Hezekiah Lodge No. 1</p>
-            <p class="text-sm mt-2 text-gray-400">A. F. & A. M. of Texas and the U. S. A.</p>
-            <p class="text-xs text-gray-500 mt-1">Ancient Free and Accepted Scottish Rite / York Rite / Member of the General Grand Masonic Congress</p>
+            <p class="text-sm mt-2 text-gray-400">Universal Grand Lodge, A. F. & A. M. of Texas and the U. S. A.</p>
+            <p class="text-xs text-gray-500 mt-1">Ancient Free and Accepted Scottish Rite / Member of the General Grand Masonic Congress</p>
         </header>
 
         <!-- Loading/Error Indicator -->
@@ -555,14 +555,33 @@
         // =========================================================================================
 
 
-        // --- 1. CANVAS/ENVIRONMENT VARIABLES (PREFER THIS WHEN AVAILABLE) ---
-        // Determine the operating mode: Canvas or External
+        // --- 1. CONFIGURATION HANDLING ---
+        // Check for Canvas environment variables to determine running mode.
         const isCanvasMode = typeof __firebase_config !== 'undefined' && __firebase_config.length > 0;
         
-        const appId = isCanvasMode ? (typeof __app_id !== 'undefined' ? __app_id : 'lodge-membership-app') : YOUR_EXTERNAL_FIREBASE_CONFIG.projectId;
-        const firebaseConfig = isCanvasMode ? JSON.parse(__firebase_config) : YOUR_EXTERNAL_FIREBASE_CONFIG;
-        const initialAuthToken = isCanvasMode ? (typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null) : null;
-        
+        let config;
+        let authType = 'ANONYMOUS'; // Default for external
+        let globalAppId = 'lodge-membership-app';
+
+        if (isCanvasMode) {
+            // Running in Canvas: Use secure, injected config and custom token auth
+            config = JSON.parse(__firebase_config);
+            globalAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-canvas-app-id';
+            authType = 'CUSTOM_TOKEN';
+        } else {
+            // Running Externally: Use manual config and standard anonymous auth
+            config = YOUR_EXTERNAL_FIREBASE_CONFIG;
+            globalAppId = config.projectId; // Use project ID as app ID for external consistency
+            
+            // Critical check for external mode
+            if (config.apiKey === "YOUR_API_KEY_HERE" || !config.projectId || config.projectId === "YOUR_PROJECT_ID_HERE") {
+                 console.error("EXTERNAL RUN ERROR: Please update YOUR_EXTERNAL_FIREBASE_CONFIG with valid keys.");
+                 // Throwing an error here prevents bad initialization
+                 // The try/catch block in initFirebase will handle the UI display.
+                 config = null; 
+            }
+        }
+
         let db, auth;
         let userId = null;
         
@@ -580,29 +599,35 @@
          */
         async function initFirebase() {
             try {
-                // Check for valid configuration in External mode
-                if (!isCanvasMode && (firebaseConfig.apiKey === "YOUR_API_KEY_HERE" || !firebaseConfig.projectId)) {
-                    throw new Error("Firebase configuration is missing or empty. When running externally, please update the YOUR_EXTERNAL_FIREBASE_CONFIG block in the script.");
+                if (!config) {
+                    throw new Error("Initialization blocked: Firebase configuration is missing or invalid in external mode.");
                 }
 
-                // Initialize services
-                const app = initializeApp(firebaseConfig);
+                // 2. Initialize services
+                const app = initializeApp(config);
                 auth = getAuth(app);
                 db = getFirestore(app);
 
                 let userCredential;
 
-                // Authenticate: Custom Token (Canvas) or Anonymous (Canvas fallback / External)
-                if (initialAuthToken && isCanvasMode) {
-                    userCredential = await signInWithCustomToken(auth, initialAuthToken);
+                // 3. Authenticate based on environment
+                if (authType === 'CUSTOM_TOKEN') {
+                    // Canvas Mode: Use custom token
+                    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (!initialAuthToken) {
+                        // Fallback in case token is missing in Canvas environment
+                        userCredential = await signInAnonymously(auth); 
+                    } else {
+                        userCredential = await signInWithCustomToken(auth, initialAuthToken);
+                    }
                 } else {
-                    // This covers Canvas fallback and all External runs
+                    // External Mode: Use standard anonymous sign-in
                     userCredential = await signInAnonymously(auth);
                 }
 
                 if (userCredential && userCredential.user && userCredential.user.uid) {
                     userId = userCredential.user.uid;
-                    console.log("Authentication SUCCESS. User ID:", userId);
+                    console.log(`Authentication SUCCESS (${authType}). User ID: ${userId}`);
                     
                     // Success: Reveal the form and update status
                     statusMessage.textContent = `Connected successfully. User ID: ${userId}`;
@@ -623,7 +648,9 @@
                 console.error("Firebase Authentication/Initialization Error:", error);
                 
                 // Show user-friendly error
-                let friendlyError = error.message;
+                let friendlyError = error.message.includes('apiKey') 
+                    ? "FATAL ERROR: Configuration is missing or invalid. Did you paste your Firebase keys into YOUR_EXTERNAL_FIREBASE_CONFIG?"
+                    : error.message;
 
                 statusMessage.classList.add('hidden');
                 errorDisplay.classList.remove('hidden');
@@ -670,12 +697,12 @@
                 // Add System Metadata
                 data.applicantId = userId;
                 data.submissionDate = serverTimestamp();
-                data.appId = appId; // Essential for the dashboard to filter
+                data.appId = globalAppId; // Essential for the dashboard to filter
                 data.status = 'Pending Review';
 
                 // 3. Save to Firestore
                 // Path: /artifacts/{appId}/public/data/applications
-                const collectionPath = `/artifacts/${appId}/public/data/applications`;
+                const collectionPath = `/artifacts/${globalAppId}/public/data/applications`;
                 const collectionRef = collection(db, collectionPath);
                 
                 await addDoc(collectionRef, data);
