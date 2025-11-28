@@ -50,14 +50,6 @@
             border: 1px dashed #d1d5db;
             border-radius: 0.5rem;
         }
-        .admin-section {
-            background-color: #ffe4e6; 
-            border: 3px solid #ef4444;
-            pointer-events: none; 
-        }
-        .admin-section .input-field {
-            background-color: #fecaca;
-        }
     </style>
 </head>
 <body class="p-4 sm:p-8">
@@ -88,7 +80,6 @@
 
         <!-- Main Form Container - Hidden by default until Auth succeeds -->
         <form id="membershipApplicationForm" class="space-y-10 hidden">
-            <!-- Form Sections (Content omitted for brevity but remains the same as previous file) -->
             
             <section class="space-y-6">
                 <h2 class="text-xl font-bold section-header">Lodge Information</h2>
@@ -483,51 +474,6 @@
             <!-- Submission Message Box -->
             <div id="messageBox" class="hidden mt-6 p-4 text-center text-sm rounded-lg" role="alert"></div>
 
-            <!-- 9. LODGE ADMINISTRATIVE SECTION -->
-            <section class="admin-section space-y-6 p-6 mt-12 shadow-inner">
-                <div class="text-center">
-                    <h2 class="text-2xl font-black text-red-700">STOP</h2>
-                    <p class="font-bold text-red-600">FOR LODGE SECRETARY / WORSHIPFUL MASTER USE ONLY</p>
-                    <h2 class="text-2xl font-black text-red-700">STOP</h2>
-                </div>
-                
-                <div class="space-y-4 pt-4 border-t border-red-400">
-                    <h3 class="font-semibold text-lg text-red-800">Investigation Committee</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <input type="text" class="input-field" value="Name of Investigation Committee Member 1">
-                        <input type="text" class="input-field" value="Name of Investigation Committee Member 2">
-                        <input type="text" class="input-field" value="Name of Investigation Committee Member 3">
-                    </div>
-                </div>
-
-                <div class="space-y-4 pt-4 border-t border-red-400">
-                    <h3 class="font-semibold text-lg text-red-800">Balloting and Approval</h3>
-                    <div class="form-group">
-                        <label>Applicant Balloted on in meeting held</label>
-                        <input type="text" class="input-field" value="(Month / Day / Year)">
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="form-group">
-                            <label>Approved</label>
-                            <input type="text" class="input-field" value="(Date Approved)">
-                        </div>
-                        <div class="form-group">
-                            <label>Rejected</label>
-                            <input type="text" class="input-field" value="(Date Rejected - Strike out one)">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-4 pt-4 border-t border-red-400">
-                    <h3 class="font-semibold text-lg text-red-800">SPECIAL IMPORTANT NOTICE</h3>
-                    <p class="text-sm text-red-800 font-medium">
-                        (NOTE: GRAND LODGE RELIEF IS NOT PAID IN INSTALLMENTS)
-                    </p>
-                    <p class="text-xs text-red-700">
-                        After applicant has been balloted on by local Lodge and local Lodge has approved petition or elected the said applicant for reinstatement or membership into the Lodge. The local Lodge may proceed to give degrees or add reinstated applicant to the roll of local Lodge. The full amount of Grand Lodge Relief Due, must be sent along with the application for membership after the applicant has been raised to the Master Mason's Degree. For reinstated members, the full amount of Grand Lodge Relief must be sent along with application. 
-                    </p>
-                </div>
-            </section>
         </form>
     </div>
 
@@ -542,12 +488,11 @@
         // IMPORTANT: FIREBASE CONFIGURATION CHECK
         // If the environment variables are not available (i.e., you run this outside of the Canvas),
         // you MUST provide your configuration here.
-        // Get your config from Firebase Console -> Project Settings -> General.
         // =========================================================================================
         const YOUR_EXTERNAL_FIREBASE_CONFIG = {
-            apiKey: "YOUR_API_KEY_HERE",           // <-- PASTE YOUR KEY HERE
-            authDomain: "YOUR_AUTH_DOMAIN_HERE",   // <-- PASTE YOUR AUTH DOMAIN HERE
-            projectId: "YOUR_PROJECT_ID_HERE",     // <-- PASTE YOUR PROJECT ID HERE
+            apiKey: "YOUR_API_KEY_HERE",           
+            authDomain: "YOUR_AUTH_DOMAIN_HERE",   
+            projectId: "YOUR_PROJECT_ID_HERE",     
             storageBucket: "YOUR_STORAGE_BUCKET_HERE",
             messagingSenderId: "YOUR_MESSAGING_SENDER_ID_HERE",
             appId: "YOUR_APP_ID_HERE"
@@ -556,28 +501,22 @@
 
 
         // --- 1. CONFIGURATION HANDLING ---
-        // Check for Canvas environment variables to determine running mode.
         const isCanvasMode = typeof __firebase_config !== 'undefined' && __firebase_config.length > 0;
         
         let config;
-        let authType = 'ANONYMOUS'; // Default for external
+        let authType = 'ANONYMOUS'; 
         let globalAppId = 'lodge-membership-app';
 
         if (isCanvasMode) {
-            // Running in Canvas: Use secure, injected config and custom token auth
             config = JSON.parse(__firebase_config);
             globalAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-canvas-app-id';
             authType = 'CUSTOM_TOKEN';
         } else {
-            // Running Externally: Use manual config and standard anonymous auth
             config = YOUR_EXTERNAL_FIREBASE_CONFIG;
-            globalAppId = config.projectId; // Use project ID as app ID for external consistency
+            globalAppId = config.projectId; 
             
-            // Critical check for external mode
             if (config.apiKey === "YOUR_API_KEY_HERE" || !config.projectId || config.projectId === "YOUR_PROJECT_ID_HERE") {
                  console.error("EXTERNAL RUN ERROR: Please update YOUR_EXTERNAL_FIREBASE_CONFIG with valid keys.");
-                 // Throwing an error here prevents bad initialization
-                 // The try/catch block in initFirebase will handle the UI display.
                  config = null; 
             }
         }
@@ -615,7 +554,6 @@
                     // Canvas Mode: Use custom token
                     const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
                     if (!initialAuthToken) {
-                        // Fallback in case token is missing in Canvas environment
                         userCredential = await signInAnonymously(auth); 
                     } else {
                         userCredential = await signInWithCustomToken(auth, initialAuthToken);
@@ -627,18 +565,17 @@
 
                 if (userCredential && userCredential.user && userCredential.user.uid) {
                     userId = userCredential.user.uid;
-                    console.log(`Authentication SUCCESS (${authType}). User ID: ${userId}`);
+                    console.log(`Application Form Authentication SUCCESS (${authType}). User ID: ${userId}`);
                     
                     // Success: Reveal the form and update status
-                    statusMessage.textContent = `Connected successfully. User ID: ${userId}`;
+                    statusMessage.textContent = `Connected successfully. Submission ID: ${userId}`;
                     statusMessage.classList.remove('text-indigo-600', 'border-indigo-300');
                     statusMessage.classList.add('bg-green-100', 'text-green-700', 'border-green-300');
                     
-                    // Only reveal form/enable button after successful connection
                     setTimeout(() => {
                         statusMessage.classList.add('hidden');
                         form.classList.remove('hidden');
-                        submitButton.disabled = false; // <<< THIS ENABLES THE BUTTON
+                        submitButton.disabled = false;
                     }, 500); 
                 } else {
                     throw new Error("Authentication failed or returned no user.");
@@ -647,9 +584,8 @@
             } catch (error) {
                 console.error("Firebase Authentication/Initialization Error:", error);
                 
-                // Show user-friendly error
                 let friendlyError = error.message.includes('apiKey') 
-                    ? "FATAL ERROR: Configuration is missing or invalid. Did you paste your Firebase keys into YOUR_EXTERNAL_FIREBASE_CONFIG?"
+                    ? "FATAL ERROR: Configuration is missing or invalid. Please check the code."
                     : error.message;
 
                 statusMessage.classList.add('hidden');
@@ -672,7 +608,6 @@
         form.addEventListener('submit', async function(event) {
             event.preventDefault();
 
-            // 1. Basic UI updates
             messageBox.classList.add('hidden');
             if (!validateForm()) {
                 messageBox.textContent = "Please fill out all required fields.";
@@ -689,16 +624,14 @@
                 const formData = new FormData(form);
                 const data = {};
                 for (let [key, value] of formData.entries()) {
-                    // Skip data collection for the administrative section 
-                    if (key.includes('admin') || key.includes('committee') || key.includes('ballot')) continue; 
                     data[key] = value;
                 }
                 
                 // Add System Metadata
                 data.applicantId = userId;
                 data.submissionDate = serverTimestamp();
-                data.appId = globalAppId; // Essential for the dashboard to filter
-                data.status = 'Pending Review';
+                data.appId = globalAppId; 
+                data.status = 'Pending Review'; // Initial status
 
                 // 3. Save to Firestore
                 // Path: /artifacts/{appId}/public/data/applications
@@ -708,7 +641,7 @@
                 await addDoc(collectionRef, data);
 
                 // 4. Success Message
-                messageBox.textContent = 'Success! Your application has been submitted and saved to the database for review.';
+                messageBox.textContent = 'Success! Your application has been submitted and saved to the database for review. Thank you.';
                 messageBox.className = "mt-6 p-4 text-center text-sm rounded-lg bg-green-100 text-green-700 block";
                 form.reset();
                 window.scrollTo({ top: 0, behavior: 'smooth' });
