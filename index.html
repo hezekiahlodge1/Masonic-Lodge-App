@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>King Hezekiah Lodge No. 1 Application for Membership</title>
+    <title>King Hezekiah Lodge Application for Membership</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* --- Deep Blue and Gold Theme --- */
@@ -24,7 +24,7 @@
             background-color: var(--color-primary);
             color: white;
             border-bottom: 5px solid var(--color-accent);
-            border-radius: 0.75rem 0.75rem 0 0; /* Keep top corners rounded */
+            border-radius: 0.75rem 0.75rem 0 0; 
         }
         .header-block h1 {
             font-family: 'Playfair Display', serif;
@@ -85,7 +85,7 @@
             transform: scale(1);
         }
 
-        /* Disclaimer/Message Box Styling */
+        /* Message Box Styling */
         .disclaimer {
             font-size: 0.875rem;
             color: #6b7280;
@@ -105,23 +105,114 @@
             color: #991b1b;
             border: 1px solid #ef4444;
         }
+        /* --- Admin Overlay Styling --- */
+        .admin-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            z-index: 50; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .admin-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 950px; /* Wider for list */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            color: var(--color-primary);
+            border: 5px solid var(--color-accent);
+        }
+        .admin-content h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--color-primary);
+        }
+        .btn-close {
+            background-color: var(--color-primary);
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .btn-close:hover {
+            background-color: #004080;
+        }
+        /* Admin Button Style */
+        .btn-admin {
+            background-color: var(--color-accent);
+            color: var(--color-primary);
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .btn-admin:hover {
+            background-color: #e0b445;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8">
 
+    <!-- Admin Password Modal (New Custom Modal) -->
+    <div id="adminPasswordModal" class="admin-overlay hidden">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-80 max-w-full text-center border-4 border-yellow-600">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Admin Login</h3>
+            <p class="text-sm text-gray-600 mb-4">Enter the administrative passcode:</p>
+            <input type="password" id="adminPasscodeField" class="input-field mb-4 text-center" placeholder="Passcode (Hint: 1776)">
+            <button id="adminPasscodeSubmit" class="w-full px-4 py-2 rounded-lg btn-submit">
+                Access Dashboard
+            </button>
+            <button id="adminPasscodeCancel" class="w-full px-4 py-1 mt-2 rounded-lg text-sm bg-gray-200 text-gray-700 hover:bg-gray-300 transition">
+                Cancel
+            </button>
+            <p id="passcodeError" class="text-xs text-red-500 mt-2 hidden">Invalid passcode. Try again.</p>
+        </div>
+    </div>
+
+
+    <!-- Admin Page Dashboard Overlay -->
+    <div id="adminPageOverlay" class="admin-overlay hidden">
+        <div class="admin-content">
+            <h2 class="text-3xl font-bold mb-4 border-b pb-2 border-gray-300">Admin Dashboard: Submitted Applications</h2>
+            <p class="mb-4 text-gray-700 font-semibold text-sm">Live applications submitted to the `applications` collection. User ID: <span id="adminUserId" class="font-mono text-xs"></span></p>
+            
+            <!-- Admin Loading Status -->
+            <div id="adminLoadStatus" class="p-3 mb-4 rounded-lg text-sm bg-blue-100 text-blue-800">Loading applications...</div>
+
+            <!-- Applications List Container -->
+            <section id="applicationsList" class="max-h-[60vh] overflow-y-auto space-y-4 pr-2"></section>
+
+            <div class="flex justify-end mt-8">
+                <button id="closeAdminButton" class="btn-close px-6 py-2 rounded-lg shadow-lg">Close Admin</button>
+            </div>
+        </div>
+    </div>
+
+
     <div class="max-w-4xl mx-auto bg-white shadow-2xl rounded-xl">
         
         <!-- Header and Emblem (Updated Look) -->
-        <header class="header-block text-center p-6 sm:p-8">
-            <span class="hammer-icon">&#9874;</span>
-            <h1 class="font-extrabold tracking-tight">APPLICATION FOR MEMBERSHIP</h1>
-            <p class="text-xl mt-1 font-bold text-gray-200">King Hezekiah Lodge No. 1</p>
-            <p class="text-sm mt-2 text-gray-400">A. F. & A. M. of Texas and the U. S. A.</p>
-            <p class="text-xs text-gray-500 mt-1">Ancient Free and Accepted Scottish Rite / York Rite / Member of the General Grand Masonic Congress</p>
+        <header class="header-block p-6 sm:p-8 relative">
+            <!-- Admin Button -->
+            <button id="adminButton" class="btn-admin absolute top-4 right-4 text-sm shadow-md">
+                Admin
+            </button>
+            
+            <div class="text-center">
+                <span class="hammer-icon">&#9874;</span>
+                <h1 class="font-extrabold tracking-tight">APPLICATION FOR MEMBERSHIP</h1>
+                <p class="text-xl mt-1 font-bold text-gray-200">King Hezekiah Lodge No. 1</p>
+                <p class="text-sm mt-2 text-gray-400">A. F. & A. M. of Texas and the U. S. A.</p>
+                <p class="text-xs text-gray-500 mt-1">Ancient Free and Accepted Scottish Rite / York Rite / Member of the General Grand Masonic Congress</p>
+            </div>
         </header>
 
         <div class="p-6 sm:p-10">
-            <!-- Loading/Error Indicator -->
+            <!-- Loading/Success Indicator -->
             <div id="statusMessage" class="text-center p-4 text-white font-medium bg-gray-600 rounded-lg mb-8">
                 Initializing secure connection...
             </div>
@@ -204,7 +295,7 @@
                         </div>
                         <div class="form-group">
                             <label for="wmSecretaryAddress">Address, City/State/ZIP</label>
-                            <input type="text" id="wmSecretaryAddress" name="wmSecretaryAddress" class="input-field" placeholder="Address, City/State/ZIP">
+                            <input type="text" id="wmSecretaryAddress" name="wmSecretaryAddress" placeholder="Address, City/State/ZIP" class="input-field">
                         </div>
                         <div class="form-group">
                             <label for="wmSecretaryPhone">Telephone No. (A/C)</label>
@@ -322,7 +413,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="divorceDate">Date Divorce granted</label>
-                                <input type="date" id="divorceDate" name="divorceDate" class="input-field">
+                            <input type="date" id="divorceDate" name="divorceDate" class="input-field">
                             </div>
                             <div class="form-group">
                                 <label for="divorceCityState">City, State of divorce</label>
@@ -522,7 +613,13 @@
                     <button type="submit" id="submitButton" class="w-full sm:w-1/2 px-8 py-4 rounded-lg shadow-xl btn-submit tracking-wider disabled:opacity-50" disabled>
                         Save & Submit Formal Application
                     </button>
-                    <div id="spinner" class="hidden text-gray-700 font-bold">Processing...</div>
+                    <div id="spinner" class="hidden font-bold">
+                        <svg class="animate-spin h-5 w-5 text-current inline mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                    </div>
                 </div>
 
                 <!-- Submission Message Box -->
@@ -532,69 +629,91 @@
         </div>
     </div>
 
+    <!-- Live Firebase Script -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, addDoc, collection, serverTimestamp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, addDoc, collection, serverTimestamp, setLogLevel, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        setLogLevel('debug');
+        // Set log level to Debug to see detailed console output
+        setLogLevel('Debug');
 
         // =========================================================================================
-        // IMPORTANT: FIREBASE CONFIGURATION CHECK
-        // If the environment variables are not available (i.e., you run this outside of the Canvas),
-        // you MUST provide your configuration here.
+        // LIVE FIREBASE CONFIGURATION (Provided by User)
         // =========================================================================================
         const YOUR_EXTERNAL_FIREBASE_CONFIG = {
-            apiKey: "YOUR_API_KEY_HERE",           
-            authDomain: "YOUR_AUTH_DOMAIN_HERE",   
-            projectId: "YOUR_PROJECT_ID_HERE",     
-            storageBucket: "YOUR_STORAGE_BUCKET_HERE",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID_HERE",
-            appId: "YOUR_APP_ID_HERE"
+            apiKey: "AIzaSyBAYN5FX3snNSLDjcxnjT1PNC33Qu5TlWo",
+            authDomain: "hezekiah-lodge-admin.firebaseapp.com",
+            projectId: "hezekiah-lodge-admin",
+            storageBucket: "hezekiah-lodge-admin.firebasestorage.app",
+            messagingSenderId: "599617453177",
+            appId: "1:599617453177:web:7ff088d9ac115427aca8a8",
+            measurementId: "G-BZB6H3N8ZZ" 
         };
         // =========================================================================================
 
+        // --- ADMIN CONFIGURATION ---
+        const ADMIN_PASSCODE = '1776'; 
+        // --- END ADMIN CONFIGURATION ---
 
-        // --- 1. CONFIGURATION HANDLING ---
-        const isCanvasMode = typeof __firebase_config !== 'undefined' && __firebase_config.length > 0;
-        
-        let config;
-        let authType = 'ANONYMOUS'; 
-        let globalAppId = 'lodge-membership-app';
-
-        if (isCanvasMode) {
-            config = JSON.parse(__firebase_config);
-            globalAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-canvas-app-id';
-            authType = 'CUSTOM_TOKEN';
-        } else {
-            config = YOUR_EXTERNAL_FIREBASE_CONFIG;
-            globalAppId = config.projectId; 
-            
-            if (config.apiKey === "YOUR_API_KEY_HERE" || !config.projectId || config.projectId === "YOUR_PROJECT_ID_HERE") {
-                 console.error("EXTERNAL RUN ERROR: Please update YOUR_EXTERNAL_FIREBASE_CONFIG with valid keys.");
-                 config = null; 
-            }
-        }
 
         let db, auth;
         let userId = null;
+        let isDatabaseActive = false;
         
         // UI Elements
         const form = document.getElementById('membershipApplicationForm');
         const statusMessage = document.getElementById('statusMessage');
         const errorDisplay = document.getElementById('errorDisplay');
-        const errorText = document.getElementById('errorText');
         const submitButton = document.getElementById('submitButton');
         const spinner = document.getElementById('spinner');
         const messageBox = document.getElementById('messageBox');
+        const adminButton = document.getElementById('adminButton');
+        
+        // Admin Dashboard Elements
+        const adminPageOverlay = document.getElementById('adminPageOverlay');
+        const closeAdminButton = document.getElementById('closeAdminButton');
+        const adminLoadStatus = document.getElementById('adminLoadStatus');
+        const applicationsList = document.getElementById('applicationsList');
+        const adminUserIdSpan = document.getElementById('adminUserId');
 
+        // Admin Password Modal Elements (NEW)
+        const adminPasswordModal = document.getElementById('adminPasswordModal');
+        const adminPasscodeField = document.getElementById('adminPasscodeField');
+        const adminPasscodeSubmit = document.getElementById('adminPasscodeSubmit');
+        const adminPasscodeCancel = document.getElementById('adminPasscodeCancel');
+        const passcodeError = document.getElementById('passcodeError');
+
+
+        // --- Configuration Handling ---
+        // Canvas environment variables take precedence if they exist
+        const isCanvasMode = typeof __firebase_config !== 'undefined' && __firebase_config.length > 0;
+        let config;
+        let globalAppId = 'hezekiah-lodge-admin'; // Use the user's projectId as the default app ID
+
+        if (isCanvasMode) {
+            config = JSON.parse(__firebase_config);
+            globalAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-canvas-app-id';
+            isDatabaseActive = true; 
+        } else {
+            config = YOUR_EXTERNAL_FIREBASE_CONFIG;
+            globalAppId = config.projectId; 
+            
+            // Assume database is active since user provided credentials
+            if (config.apiKey && config.projectId && config.projectId.length > 5) {
+                 isDatabaseActive = true;
+            } else {
+                 isDatabaseActive = false;
+            }
+        }
+        
         /**
          * Initializes Firebase services and authentication.
          */
         async function initFirebase() {
             try {
-                if (!config) {
-                    throw new Error("Initialization blocked: Firebase configuration is missing or invalid in external mode.");
+                if (!isDatabaseActive) {
+                    throw new Error("Initialization Failed: Configuration missing or invalid.");
                 }
 
                 // 2. Initialize services
@@ -604,27 +723,20 @@
 
                 let userCredential;
 
-                // 3. Authenticate based on environment
-                if (authType === 'CUSTOM_TOKEN') {
-                    // Canvas Mode: Use custom token
-                    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                    if (!initialAuthToken) {
-                        userCredential = await signInAnonymously(auth); 
-                    } else {
-                        userCredential = await signInWithCustomToken(auth, initialAuthToken);
-                    }
+                // 3. Authenticate
+                if (isCanvasMode && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    userCredential = await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    // External Mode: Use standard anonymous sign-in
+                    // Sign in anonymously for public app usage
                     userCredential = await signInAnonymously(auth);
                 }
 
                 if (userCredential && userCredential.user && userCredential.user.uid) {
                     userId = userCredential.user.uid;
-                    console.log(`Application Form Authentication SUCCESS (${authType}). User ID: ${userId}`);
                     
-                    // Success: Reveal the form and update status
-                    statusMessage.textContent = `Connected successfully. Your Session ID: ${userId.substring(0, 8)}...`;
-                    statusMessage.classList.remove('bg-gray-600');
+                    // SUCCESS STATE
+                    statusMessage.textContent = `Connected LIVE (User ID: ${userId.substring(0, 8)}...). Submissions will be saved to Firestore.`;
+                    statusMessage.classList.remove('bg-gray-600', 'message-box-error');
                     statusMessage.classList.add('message-box-success');
                     
                     setTimeout(() => {
@@ -633,29 +745,136 @@
                         submitButton.disabled = false;
                     }, 500); 
                 } else {
-                    throw new Error("Authentication failed or returned no user.");
+                    throw new Error("Authentication failed: Unable to establish user session.");
                 }
 
             } catch (error) {
-                console.error("Firebase Authentication/Initialization Error:", error);
+                console.error("Firebase Initialization Error:", error);
                 
-                let friendlyError = error.message.includes('apiKey') 
-                    ? "FATAL ERROR: Configuration is missing or invalid. Please check the code."
-                    : error.message;
+                let friendlyError = isDatabaseActive ? `Connection Error: ${error.message}. Please check your Firebase rules.` : 
+                    "⚠️ CONFIGURATION ERROR: The application cannot connect to the database.";
 
-                statusMessage.classList.add('hidden');
-                errorDisplay.classList.remove('hidden');
-                errorText.textContent = friendlyError;
-                errorDisplay.classList.add('message-box-error');
+                statusMessage.classList.remove('bg-gray-600', 'message-box-success');
+                statusMessage.classList.add('message-box-error');
+                statusMessage.textContent = friendlyError;
+                
+                // Keep the form hidden if connection truly failed, or show it for MOCK purposes
+                form.classList.remove('hidden');
+                submitButton.disabled = true;
+                isDatabaseActive = false;
             }
         }
         
         /**
-         * Validates the form before submission (Placeholder for deeper validation)
+         * Renders a single application card for the admin view.
+         * @param {Object} appData - The application data object from Firestore.
+         * @param {string} docId - The document ID.
+         * @returns {HTMLElement} The card element.
          */
-        function validateForm() {
-             // Rely on HTML5 required attributes for basic validation
-            return form.checkValidity();
+        function renderApplication(appData, docId) {
+            const date = appData.submissionDate?.toDate ? appData.submissionDate.toDate().toLocaleString() : 'N/A';
+            
+            const card = document.createElement('div');
+            card.className = 'border border-gray-200 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 bg-white';
+            card.setAttribute('data-doc-id', docId); // For potential future detail lookup
+            
+            const requiredFields = [
+                { label: 'Name', key: 'printName' },
+                { label: 'Lodge Name', key: 'lodgeName' },
+                { label: 'Lodge No.', key: 'lodgeNumber' },
+                { label: 'Application Date', key: 'applicationDate' },
+            ];
+            
+            let content = `
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 border-b pb-2">
+                    <h4 class="font-bold text-lg text-primary">${appData.printName || 'Applicant'}</h4>
+                    <span class="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded mt-1 sm:mt-0">ID: ${docId.substring(0, 8)}...</span>
+                </div>
+                <div class="text-sm space-y-1 grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <p class="col-span-2 md:col-span-1"><strong>Status:</strong> <span class="text-green-600 font-semibold">${appData.status}</span></p>
+                    <p class="col-span-2 md:col-span-1"><strong>Submitted:</strong> ${date}</p>
+                    ${requiredFields.map(field => 
+                        `<p class="col-span-2 md:col-span-1 truncate" title="${appData[field.key] || 'Not Provided'}"><strong>${field.label}:</strong> ${appData[field.key] || 'N/A'}</p>`
+                    ).join('')}
+                    <div class="col-span-full pt-2">
+                         <button class="btn-admin mt-1 px-3 py-1 text-xs" onclick="viewDetails('${docId}')">View Full Details</button>
+                    </div>
+                </div>
+            `;
+
+            card.innerHTML = content;
+            return card;
+        }
+
+        /**
+         * Loads and listens for real-time changes to the applications collection.
+         */
+        function loadApplications() {
+            if (!db || !userId) {
+                adminLoadStatus.textContent = "Database not connected or user not authenticated.";
+                adminLoadStatus.className = 'p-3 mb-4 rounded-lg text-sm message-box-error';
+                return;
+            }
+            
+            adminUserIdSpan.textContent = userId;
+            applicationsList.innerHTML = '';
+            adminLoadStatus.textContent = "Fetching real-time applications...";
+            adminLoadStatus.className = 'p-3 mb-4 rounded-lg text-sm bg-blue-100 text-blue-800';
+
+            const collectionPath = `/artifacts/${globalAppId}/public/data/applications`;
+            const q = query(collection(db, collectionPath));
+            
+            // onSnapshot listener for real-time updates
+            onSnapshot(q, (snapshot) => {
+                applicationsList.innerHTML = ''; // Clear existing list
+                const applications = [];
+
+                snapshot.forEach(doc => {
+                    applications.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Client-side sorting by submission date (descending - newest first)
+                applications.sort((a, b) => {
+                    const dateA = a.submissionDate?.toDate ? a.submissionDate.toDate().getTime() : 0;
+                    const dateB = b.submissionDate?.toDate ? b.submissionDate.toDate().getTime() : 0;
+                    return dateB - dateA; // Sort descending (newest first)
+                });
+
+                if (applications.length === 0) {
+                    adminLoadStatus.textContent = "No applications submitted yet.";
+                    adminLoadStatus.className = 'p-3 mb-4 rounded-lg text-sm bg-yellow-100 text-yellow-800';
+                    return;
+                }
+
+                applications.forEach(app => {
+                    applicationsList.appendChild(renderApplication(app, app.id));
+                });
+
+                adminLoadStatus.textContent = `Found ${applications.length} applications. Showing real-time feed.`;
+                adminLoadStatus.className = 'p-3 mb-4 rounded-lg text-sm message-box-success';
+
+            }, (error) => {
+                console.error("Firestore Error in onSnapshot:", error);
+                adminLoadStatus.textContent = `Error loading applications: ${error.message}`;
+                adminLoadStatus.className = 'p-3 mb-4 rounded-lg text-sm message-box-error';
+            });
+        }
+
+        /**
+         * Mocks the "View Full Details" functionality with a temporary message box.
+         * @param {string} docId - The ID of the document to view.
+         */
+        window.viewDetails = function(docId) {
+            // Since alert() and multiple files are restricted, we show a friendly message.
+            const tempMsgBox = document.createElement('div');
+            tempMsgBox.textContent = `Application ID: ${docId.substring(0, 8)}... - Feature Note: In a production environment, this button would open a detailed, full-screen modal showing the applicant's complete submission history.`;
+            tempMsgBox.className = "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-4 rounded-lg shadow-lg bg-yellow-100 text-yellow-800 z-50 transition-opacity duration-300 w-11/12 md:w-1/2 text-center text-sm font-semibold border-2 border-yellow-300";
+            document.body.appendChild(tempMsgBox);
+            
+            setTimeout(() => {
+                tempMsgBox.classList.add('opacity-0');
+                setTimeout(() => tempMsgBox.remove(), 300);
+            }, 3000);
         }
 
         /**
@@ -665,7 +884,7 @@
             event.preventDefault();
 
             messageBox.classList.add('hidden');
-            if (!validateForm()) {
+            if (!form.checkValidity()) {
                 messageBox.textContent = "Please fill out all required fields.";
                 messageBox.className = "mt-6 p-4 text-center text-sm rounded-lg message-box-error block";
                 return;
@@ -676,27 +895,29 @@
             spinner.classList.remove('hidden');
 
             try {
-                // 2. Collect Data
                 const formData = new FormData(form);
                 const data = {};
                 for (let [key, value] of formData.entries()) {
                     data[key] = value;
                 }
+
+                if (!isDatabaseActive) {
+                    throw new Error("Cannot submit. Database is not active or initialized.");
+                }
                 
-                // Add System Metadata
+                // REAL SUBMISSION LOGIC
                 data.applicantId = userId;
                 data.submissionDate = serverTimestamp();
                 data.appId = globalAppId; 
-                data.status = 'Pending Review'; // Initial status
+                data.status = 'Pending Review';
 
-                // 3. Save to Firestore
-                // Path: /artifacts/{appId}/public/data/applications
+                // IMPORTANT: Saving to the public collection path defined by the Canvas security rules
+                // /artifacts/{appId}/public/data/{your_collection_name}
                 const collectionPath = `/artifacts/${globalAppId}/public/data/applications`;
                 const collectionRef = collection(db, collectionPath);
                 
                 await addDoc(collectionRef, data);
 
-                // 4. Success Message
                 messageBox.textContent = 'Success! Your application has been submitted and saved to the database for review. Thank you.';
                 messageBox.className = "mt-6 p-4 text-center text-sm rounded-lg message-box-success block";
                 form.reset();
@@ -704,7 +925,7 @@
 
             } catch (e) {
                 console.error("Error adding document: ", e);
-                messageBox.textContent = `Submission failed: ${e.message}. Please check console for network/permission errors.`;
+                messageBox.textContent = `Submission failed: ${e.message}. Check your Firebase rules and console logs.`;
                 messageBox.className = "mt-6 p-4 text-center text-sm rounded-lg message-box-error block";
             } finally {
                 submitButton.textContent = 'Save & Submit Formal Application';
@@ -713,8 +934,79 @@
             }
         });
 
+        // --- ADMIN LOGIC (Refactored to use Custom Modal) ---
+
+        /**
+         * Core logic to handle admin login submission.
+         */
+        function handleAdminLogin() {
+            const passcode = adminPasscodeField.value;
+            passcodeError.classList.add('hidden');
+            
+            if (passcode === ADMIN_PASSCODE) {
+                adminPasswordModal.classList.add('hidden'); // Hide password modal
+                
+                if (isDatabaseActive) {
+                    loadApplications(); // Load data on successful login
+                } else {
+                    // Show the overlay even if not connected, but show an error message
+                    adminLoadStatus.textContent = "Database connection failed during initialization. Cannot load live data.";
+                    adminLoadStatus.className = 'p-3 mb-4 rounded-lg text-sm message-box-error';
+                }
+                adminPageOverlay.classList.remove('hidden'); // Show Admin Dashboard
+            } else {
+                passcodeError.textContent = "Invalid passcode. Try again.";
+                passcodeError.classList.remove('hidden');
+                adminPasscodeField.value = '';
+                setTimeout(() => adminPasscodeField.focus(), 100);
+            }
+        }
+
+
+        /**
+         * Handles the Admin button click, showing the custom passcode modal.
+         */
+        adminButton.addEventListener('click', () => {
+            // 1. Show the custom modal instead of prompt()
+            adminPasscodeField.value = ''; // Clear previous input
+            passcodeError.classList.add('hidden');
+            adminPasswordModal.classList.remove('hidden');
+            setTimeout(() => adminPasscodeField.focus(), 100);
+        });
+
+        /**
+         * Event listener for the modal's submit button.
+         */
+        adminPasscodeSubmit.addEventListener('click', handleAdminLogin);
+
+        /**
+         * Event listener for pressing Enter in the passcode field.
+         */
+        adminPasscodeField.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleAdminLogin();
+            }
+        });
+
+        /**
+         * Event listener for the modal's cancel button.
+         */
+        adminPasscodeCancel.addEventListener('click', () => {
+            adminPasswordModal.classList.add('hidden');
+        });
+
+
+        /**
+         * Closes the Admin page overlay.
+         */
+        closeAdminButton.addEventListener('click', () => {
+            adminPageOverlay.classList.add('hidden');
+            // Unsubscribe logic would go here if we stored the unsubscribe function globally.
+        });
+
+
         // Start App
-        initFirebase();
+        window.onload = initFirebase;
     </script>
 </body>
 </html>
